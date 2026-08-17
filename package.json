@@ -74,6 +74,15 @@
       "type": "distribution",
       "category": "public.app-category.productivity",
       "icon": "public/icon.icns",
+      "target": [
+        {
+          "target": "pkg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
       "provisioningProfile": "build/embedded.provisionprofile",
       "entitlements": "build/entitlements.mas.plist",
       "entitlementsInherit": "build/entitlements.mas.inherit.plist",
