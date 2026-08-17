@@ -59,7 +59,7 @@
   },
   "build": {
     "appId": "com.ayrisdev.ayrislegal",
-    "productName": "AyrisLegal",
+    "productName": "Ayris Legal",
     "asar": true,
     "asarUnpack": [
       "**/node_modules/@napi-rs/canvas/**",
@@ -139,7 +139,8 @@
       "applicationId": "AyrisLegal",
       "identityName": "38265Suppetiae.AyrisLegal",
       "publisher": "CN=2C932EFD-CD8E-4BEA-AD12-F3D87DD6C652",
-      "publisherDisplayName": "Suppetiae"
+      "publisherDisplayName": "Suppetiae",
+      "displayName": "Ayris Legal"
     },
     "nsis": {
       "oneClick": false,
