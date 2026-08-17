@@ -1,0 +1,330 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+import { useStore } from '@/store/useStore';
+import { Loader2, Mail, Lock, UserPlus, LogIn, Globe } from 'lucide-react';
+
+// Electron'un preload.js üzerinden gelen API — tarayıcıda undefined olur.
+interface ElectronApi {
+  licenseGetDeviceId?: () => Promise<string>;
+  authRegisterWithEmail?: (email: string, password: string) => Promise<{ ok: boolean; status: number; data: { error?: string; code?: string }; networkError?: boolean }>;
+  openExternalUrl?: (url: string) => void;
+  onAuthCallback?: (callback: (url: string) => void) => () => void;
+}
+function getElectronApi(): ElectronApi | undefined {
+  return (window as unknown as { electron?: ElectronApi }).electron;
+}
+
+type TabType = 'login' | 'register';
+
+export default function Login() {
+  const [tab, setTab] = useState<TabType>('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  const router = useRouter();
+  const setUser = useStore((state) => state.setUser);
+
+  useEffect(() => {
+    const electronApi = getElectronApi();
+    if (!electronApi?.onAuthCallback) return;
+
+    const cleanup = electronApi.onAuthCallback(async (url) => {
+      try {
+        setGoogleLoading(true);
+        // ayrislegal://auth/callback#access_token=...&refresh_token=...
+        const hash = url.split('#')[1];
+        if (!hash) return;
+        
+        const params = new URLSearchParams(hash);
+        const access_token = params.get('access_token');
+        const refresh_token = params.get('refresh_token');
+
+        if (access_token && refresh_token) {
+          const { data, error } = await supabase.auth.setSession({
+            access_token,
+            refresh_token
+          });
+
+          if (error) throw error;
+          if (data.user) {
+            setUser(data.user);
+            router.push('/');
+          }
+        }
+      } catch (err) {
+        console.error('Deep link auth error:', err);
+        setError('Oturum açılamadı.');
+      } finally {
+        setGoogleLoading(false);
+      }
+    });
+
+    return cleanup;
+  }, [router, setUser]);
+
+  // ────────────────────────────── Login ──────────────────────────────
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      if (data.user) {
+        setUser(data.user);
+        router.push('/');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Giriş yapılamadı.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ────────────────────────────── Register ──────────────────────────────
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    if (password.length < 8) {
+      setError('Şifre en az 8 karakter olmalıdır.');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Her ortamda (Electron + tarayıcı) Supabase signUp ile doğrudan kayıt.
+      // Device ID double-trial kontrolü, sonraki adımda arka planda yapılır.
+      const { data, error: signUpError } = await supabase.auth.signUp({ email, password });
+
+      if (signUpError) {
+        // Supabase hata mesajlarını kullanıcı dostu Türkçeye çevir
+        const msg = signUpError.message?.toLowerCase() ?? '';
+        if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('user already exists')) {
+          setError('Bu e-posta adresi zaten kayıtlı.');
+        } else if (msg.includes('password')) {
+          setError('Şifre en az 8 karakter olmalı ve güçlü bir şifre seçilmelidir.');
+        } else if (msg.includes('invalid email')) {
+          setError('Geçersiz e-posta adresi.');
+        } else {
+          setError(signUpError.message || 'Kayıt oluşturulamadı.');
+        }
+        return;
+      }
+
+      if (!data.user) {
+        setError('Kayıt oluşturulamadı. Lütfen tekrar deneyin.');
+        return;
+      }
+
+      // Kayıt başarılı — oturum hemen açıldıysa (email confirm kapalı) uygulamaya yönlendir
+      if (data.session) {
+        setUser(data.user);
+        router.push('/');
+      } else {
+        // Email onayı gerektiren Supabase konfigürasyonu
+        setSuccess('Kayıt başarılı! 3 günlük deneme sürümünüz başladı. Lütfen e-postanızı onaylayın ve giriş yapın.');
+        setTab('login');
+        setEmail(email);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kayıt oluşturulamadı.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ────────────────────────────── Google OAuth ──────────────────────────────
+  const handleGoogleLogin = async () => {
+    setGoogleLoading(true);
+    setError(null);
+    try {
+      const electronApi = getElectronApi();
+      // Electron build ise, custom protocol'ümüze (deep link) yönlendir;
+      // Web build ise, uygulamanın normal url'ine yönlendir (window.location.origin).
+      const redirectTo = electronApi 
+        ? 'ayrislegal://auth/callback' 
+        : `${window.location.origin}/auth/v1/callback`;
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo,
+          skipBrowserRedirect: !!electronApi, // Electron'da URL'yi kendimiz açıyoruz
+        },
+      });
+      if (error) throw error;
+
+      if (data?.url) {
+        if (electronApi?.openExternalUrl) {
+          // Electron build: sistem tarayıcısında aç
+          electronApi.openExternalUrl(data.url);
+          setSuccess('Google giriş sayfası tarayıcınızda açıldı. Lütfen girişi tamamlayın.');
+        } else {
+          // Tarayıcı / dev mod: normal yönlendirme
+          window.location.href = data.url;
+        }
+      }
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Google ile giriş başlatılamadı.');
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+
+  // ────────────────────────────── UI Helpers ──────────────────────────────
+  const switchTab = (t: TabType) => {
+    setTab(t);
+    setError(null);
+    setSuccess(null);
+    setEmail('');
+    setPassword('');
+  };
+
+  return (
+    <div className="flex h-screen bg-[#060b14] text-[#eef1f4] font-sans selection:bg-teal-500/30 items-center justify-center">
+      <div className="w-full max-w-md p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-xl">
+        {/* Logo + başlık */}
+        <div className="flex flex-col items-center mb-8">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/branding/logo-mark.png" alt="AyrisLegal" className="w-16 h-16 rounded-2xl mb-4" />
+          <h1 className="text-2xl font-bold tracking-tight text-white mb-1">AyrisLegal</h1>
+          <p className="text-gray-400 text-sm text-center">Yapay zeka destekli hukuki çalışma alanı</p>
+        </div>
+
+        {/* Sekme seçimi */}
+        <div className="flex rounded-xl overflow-hidden border border-white/10 mb-6">
+          <button
+            type="button"
+            onClick={() => switchTab('login')}
+            className={`flex-1 py-2.5 text-sm font-medium flex items-center justify-center gap-1.5 transition-all ${
+              tab === 'login'
+                ? 'bg-teal-600 text-white'
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <LogIn className="w-4 h-4" />
+            Giriş Yap
+          </button>
+          <button
+            type="button"
+            onClick={() => switchTab('register')}
+            className={`flex-1 py-2.5 text-sm font-medium flex items-center justify-center gap-1.5 transition-all ${
+              tab === 'register'
+                ? 'bg-teal-600 text-white'
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <UserPlus className="w-4 h-4" />
+            Kayıt Ol
+          </button>
+        </div>
+
+        {/* Trial badge — sadece kayıt sekmesinde */}
+        {tab === 'register' && (
+          <div className="mb-5 px-4 py-3 bg-teal-500/10 border border-teal-500/20 rounded-xl text-center">
+            <span className="text-teal-400 text-sm font-medium">✨ 3 günlük ücretsiz deneme</span>
+            <p className="text-gray-400 text-xs mt-0.5">Kredi kartı gerekmez</p>
+          </div>
+        )}
+
+        {/* Hata / başarı mesajları */}
+        {error && (
+          <div className="mb-5 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm text-center">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="mb-5 p-4 bg-teal-500/10 border border-teal-500/20 text-teal-400 rounded-xl text-sm text-center">
+            {success}
+          </div>
+        )}
+
+        {/* Form */}
+        <form onSubmit={tab === 'login' ? handleLogin : handleRegister} className="space-y-4">
+          {/* E-posta */}
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-1">E-posta</label>
+            <div className="relative">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full bg-black/30 border border-white/10 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:border-teal-500/50 focus:bg-white/10 transition-all text-white placeholder-gray-600"
+                placeholder="avukat@ornek.com"
+              />
+              <Mail className="w-5 h-5 text-gray-500 absolute left-3 top-3.5" />
+            </div>
+          </div>
+
+          {/* Şifre */}
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-1">Şifre</label>
+            <div className="relative">
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={tab === 'register' ? 8 : undefined}
+                className="w-full bg-black/30 border border-white/10 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:border-teal-500/50 focus:bg-white/10 transition-all text-white placeholder-gray-600"
+                placeholder="••••••••"
+              />
+              <Lock className="w-5 h-5 text-gray-500 absolute left-3 top-3.5" />
+            </div>
+          </div>
+
+          {/* Submit */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-teal-600 hover:bg-teal-500 text-white font-medium py-3 rounded-xl flex justify-center items-center gap-2 transition-all mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : tab === 'login' ? (
+              'Giriş Yap'
+            ) : (
+              'Hesap Oluştur'
+            )}
+          </button>
+        </form>
+
+        {/* Ayırıcı */}
+        <div className="flex items-center my-5 gap-3">
+          <div className="flex-1 h-px bg-white/10" />
+          <span className="text-gray-600 text-xs">veya</span>
+          <div className="flex-1 h-px bg-white/10" />
+        </div>
+
+        {/* Google ile giriş */}
+        <button
+          type="button"
+          onClick={handleGoogleLogin}
+          disabled={googleLoading}
+          className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {googleLoading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Globe className="w-4 h-4" />
+          )}
+          Google ile {tab === 'login' ? 'Giriş Yap' : 'Kayıt Ol'}
+        </button>
+      </div>
+    </div>
+  );
+}

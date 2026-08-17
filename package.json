@@ -1,0 +1,154 @@
+{
+  "name": "ayrislegal",
+  "version": "0.1.10",
+  "private": true,
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "next dev",
+    "dev:electron": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "build:mac": "next build && electron-builder --mac",
+    "build:mas": "next build && electron-builder --mac mas",
+    "build:mas:dev": "next build && electron-builder --mac mas-dev",
+    "build:win": "next build && electron-builder --win",
+    "build:appx": "next build && electron-builder --win appx --x64",
+    "build:all": "next build && electron-builder -mw",
+    "upload:mac": "node scripts/upload-release.js mac",
+    "upload:win": "node scripts/upload-release.js windows",
+    "release": "node scripts/release.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.112.2",
+    "adm-zip": "^0.6.0",
+    "electron-serve": "^3.0.1",
+    "electron-updater": "^6.8.9",
+    "framer-motion": "^13.0.0",
+    "lucide-react": "^1.30.0",
+    "mammoth": "^1.12.0",
+    "next": "16.3.0",
+    "nodemailer": "^9.0.5",
+    "officeparser": "^7.5.1",
+    "openai": "^7.4.0",
+    "pdf-parse": "^2.4.5",
+    "pdfjs-dist": "^6.2.108",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "tesseract.js": "^7.0.0",
+    "tus-js-client": "^4.3.1",
+    "utif2": "^4.1.0",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/nodemailer": "^8.0.1",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "concurrently": "^10.0.4",
+    "electron": "^43.3.0",
+    "electron-builder": "^26.15.3",
+    "electron-is-dev": "^3.0.1",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.0",
+    "tailwindcss": "^4",
+    "ts-morph": "^28.0.0",
+    "typescript": "^5",
+    "wait-on": "^9.1.0"
+  },
+  "build": {
+    "appId": "com.ayrisdev.ayrislegal",
+    "productName": "AyrisLegal",
+    "asar": true,
+    "asarUnpack": [
+      "**/node_modules/@napi-rs/canvas/**",
+      "**/node_modules/officeparser/**",
+      "**/*.node"
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "public"
+    },
+    "mas": {
+      "type": "distribution",
+      "category": "public.app-category.productivity",
+      "icon": "public/icon.icns",
+      "provisioningProfile": "build/embedded.provisionprofile",
+      "entitlements": "build/entitlements.mas.plist",
+      "entitlementsInherit": "build/entitlements.mas.inherit.plist",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false
+    },
+    "masDev": {
+      "type": "development",
+      "category": "public.app-category.productivity",
+      "icon": "public/icon.icns",
+      "provisioningProfile": "build/embedded.provisionprofile",
+      "entitlements": "build/entitlements.mas.plist",
+      "entitlementsInherit": "build/entitlements.mas.inherit.plist",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false
+    },
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "public/icon.icns",
+      "target": [
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "notarize": true,
+      "publish": {
+        "provider": "generic",
+        "url": "https://supa.ayris.tech/storage/v1/object/public/app-releases/mac",
+        "channel": "latest"
+      }
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "publish": {
+        "provider": "generic",
+        "url": "https://supa.ayris.tech/storage/v1/object/public/app-releases/windows",
+        "channel": "latest"
+      }
+    },
+    "appx": {
+      "applicationId": "AyrisLegal",
+      "identityName": "38265Suppetiae.AyrisLegal",
+      "publisher": "CN=2C932EFD-CD8E-4BEA-AD12-F3D87DD6C652",
+      "publisherDisplayName": "Suppetiae"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false
+    },
+    "files": [
+      "out/**/*",
+      "electron/**/*",
+      "package.json"
+    ]
+  }
+}

@@ -1,0 +1,517 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Geist:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+*, *::before, *::after { box-sizing: border-box; }
+
+:root,
+[data-theme="dark"] {
+  --color-bg-base: #0B0F19;
+  --color-bg-glow: #0C101D;
+  --color-surface: #0C1324;
+  --color-surface-hover: #162035;
+  --color-text: #E2E8F0;
+  --color-text-muted: #94A3B8;
+  --color-accent: #3B82F6;
+  --color-accent-light: rgba(59, 130, 246, 0.2);
+  --color-accent-dark: #2563EB;
+  --color-divider: #1E293B;
+  --color-neutral-100: rgba(255, 255, 255, 0.05);
+  --color-neutral-200: rgba(255, 255, 255, 0.1);
+  --color-neutral-800: #94A3B8;
+  --color-ok: #10B981;
+
+  --sidebar-bg: #0C1324;
+  --sidebar-border: #1E293B;
+  --sidebar-text: #94A3B8;
+  --sidebar-active-bg: #3B82F6;
+  --sidebar-active-text: #FFFFFF;
+
+  --card-bg: #0C1324;
+  --card-border: #1E293B;
+
+  --input-bg: #0C1324;
+  --input-border: #1E293B;
+  --input-text: #E2E8F0;
+
+  color-scheme: dark;
+}
+
+[data-theme="light"] {
+  --color-bg-base: #F8FAFC;
+  --color-bg-glow: #F1F5F9;
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F1F5F9;
+  --color-text: #0F172A;
+  --color-text-muted: #334155;
+  --color-accent: #2563EB;
+  --color-accent-light: rgba(37, 99, 235, 0.12);
+  --color-accent-dark: #1D4ED8;
+  --color-divider: #E2E8F0;
+  --color-neutral-100: rgba(0, 0, 0, 0.04);
+  --color-neutral-200: rgba(0, 0, 0, 0.08);
+  --color-neutral-800: #334155;
+  --color-ok: #059669;
+
+  --sidebar-bg: #FFFFFF;
+  --sidebar-border: #E2E8F0;
+  --sidebar-text: #334155;
+  --sidebar-active-bg: #EFF6FF;
+  --sidebar-active-text: #2563EB;
+
+  --card-bg: #FFFFFF;
+  --card-border: #E2E8F0;
+
+  --input-bg: #FFFFFF;
+  --input-border: #CBD5E1;
+  --input-text: #0F172A;
+
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg-base);
+  color: var(--color-text);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0 0 8px;
+}
+
+label, th, .uppercase-label {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
+::selection { background: var(--color-accent); color: #FFFFFF; }
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes indeterminate {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+
+/* Cyber-Juris Logic Theme (Scoped to .cyber-juris) */
+.cyber-juris {
+  --cj-bg: #0c1324;
+  --cj-surface-dim: #0c1324;
+  --cj-surface-bright: #33394c;
+  --cj-surface-container-lowest: #070d1f;
+  --cj-surface-container-low: #151b2d;
+  --cj-surface-container: #191f31;
+  --cj-surface-container-high: #23293c;
+  --cj-surface-container-highest: #2e3447;
+  
+  --cj-on-surface: #dce1fb;
+  --cj-on-surface-variant: #c2c6d6;
+  --cj-outline: #8c909f;
+  --cj-outline-variant: #424754;
+  
+  --cj-primary: #adc6ff;
+  --cj-on-primary: #002e6a;
+  --cj-primary-container: #4d8eff;
+  --cj-on-primary-container: #00285d;
+  --cj-primary-fixed: #d8e2ff;
+  --cj-primary-fixed-dim: #adc6ff;
+  --cj-on-primary-fixed: #001a42;
+  
+  --cj-tertiary: #4edea3;
+  --cj-on-tertiary: #003824;
+  --cj-tertiary-container: #00a572;
+  --cj-on-tertiary-container: #00311f;
+
+  background-color: var(--cj-bg);
+  color: var(--cj-on-surface);
+  font-family: 'Inter', system-ui, sans-serif;
+  height: 100%;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+[data-theme="light"] .cyber-juris,
+[data-theme="light"].cyber-juris {
+  --cj-bg: #F8FAFC;
+  --cj-surface-dim: #F1F5F9;
+  --cj-surface-bright: #FFFFFF;
+  --cj-surface-container-lowest: #FFFFFF;
+  --cj-surface-container-low: #F8FAFC;
+  --cj-surface-container: #FFFFFF;
+  --cj-surface-container-high: #F1F5F9;
+  --cj-surface-container-highest: #E2E8F0;
+  
+  --cj-on-surface: #0F172A;
+  --cj-on-surface-variant: #475569;
+  --cj-outline: #94A3B8;
+  --cj-outline-variant: #CBD5E1;
+  
+  --cj-primary: #2563EB;
+  --cj-on-primary: #FFFFFF;
+  --cj-primary-container: #DBEAFE;
+  --cj-on-primary-container: #1E40AF;
+  --cj-primary-fixed: #BFDBFE;
+  --cj-primary-fixed-dim: #93C5FD;
+  --cj-on-primary-fixed: #1E3A8A;
+  
+  --cj-tertiary: #059669;
+  --cj-on-tertiary: #FFFFFF;
+  --cj-tertiary-container: #D1FAE5;
+  --cj-on-tertiary-container: #065F46;
+
+  background-color: var(--cj-bg);
+  color: var(--cj-on-surface);
+}
+
+.cyber-juris h1, .cyber-juris h2, .cyber-juris h3 {
+  font-family: 'Geist', system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.cyber-juris .font-mono-cj {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.cyber-juris .glass-panel,
+.glass-panel {
+  background: rgba(21, 27, 45, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+[data-theme="light"] .cyber-juris .glass-panel,
+[data-theme="light"] .glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.cyber-juris .neon-marker {
+  box-shadow: 0 0 4px var(--cj-primary);
+  border: 1px solid var(--cj-primary);
+  background: rgba(77, 142, 255, 0.1);
+}
+
+.cyber-juris .cj-button {
+  background: var(--cj-primary);
+  color: var(--cj-on-primary);
+  font-family: 'Geist', system-ui, sans-serif;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2);
+  transition: all 0.2s ease;
+}
+.cyber-juris .cj-button:hover:not(:disabled) {
+  background: var(--cj-primary-fixed-dim);
+}
+.cyber-juris .cj-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cyber-juris-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.cyber-juris-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.cyber-juris-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--cj-surface-container-highest);
+  border-radius: 4px;
+}
+
+/* Horizontal scan animation for loading */
+@keyframes scanningBar {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+.cj-scanning-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: 50%;
+  background: linear-gradient(90deg, transparent, var(--cj-primary), transparent);
+  animation: scanningBar 1.5s infinite linear;
+}
+
+/* Specific Light Mode Overrides for Hardcoded Dark Tailwind Classes Across All Views */
+
+/* 1. Page Backgrounds & Outer Containers */
+[data-theme="light"] .bg-\[\#0B0F19\],
+[data-theme="light"] .bg-\[\#0b0f19\],
+[data-theme="light"] .bg-\[\#050811\],
+[data-theme="light"] .bg-\[\#050810\],
+[data-theme="light"] .bg-\[\#070D1F\],
+[data-theme="light"] [class*="from-[#182135]"],
+[data-theme="light"] [class*="via-[#121929]"],
+[data-theme="light"] [class*="to-[#0F1524]"] {
+  background-color: var(--color-surface) !important;
+  background-image: none !important;
+}
+
+/* 2. Main Card Containers & Panel Surfaces */
+[data-theme="light"] .bg-\[\#0C1324\],
+[data-theme="light"] .bg-\[\#0c1324\],
+[data-theme="light"] .bg-\[\#090D16\],
+[data-theme="light"] .bg-\[\#090d16\],
+[data-theme="light"] .bg-\[\#0B1726\],
+[data-theme="light"] .bg-\[\#0b1726\] {
+  background-color: var(--color-surface) !important;
+}
+
+/* 3. Sub-cards, List Items, Sub-containers */
+[data-theme="light"] .bg-\[\#070d1f\],
+[data-theme="light"] .bg-\[\#080D1A\],
+[data-theme="light"] .bg-\[\#080d1a\],
+[data-theme="light"] .bg-\[\#090d16\],
+[data-theme="light"] .bg-\[\#1E2038\],
+[data-theme="light"] .bg-\[\#1e2038\],
+[data-theme="light"] .bg-\[\#050811\] {
+  background-color: #F8FAFC !important;
+}
+
+/* 4. Inputs, Secondary Buttons, Header Strips, Icon Containers, Tags, Table Row Hovers */
+[data-theme="light"] .bg-\[\#151b2d\],
+[data-theme="light"] .bg-\[\#191f31\],
+[data-theme="light"] .bg-\[\#151C2C\],
+[data-theme="light"] .bg-\[\#151c2c\],
+[data-theme="light"] .bg-\[\#162035\],
+[data-theme="light"] .bg-\[\#0F1524\],
+[data-theme="light"] .bg-\[\#0f1524\],
+[data-theme="light"] .bg-\[\#0B0F19\],
+[data-theme="light"] .bg-\[\#0B0F19\]\/40,
+[data-theme="light"] .bg-\[\#0B0F19\]\/60,
+[data-theme="light"] .bg-\[\#1E2A42\],
+[data-theme="light"] .bg-\[\#26334D\],
+[data-theme="light"] .bg-\[\#1E293B\],
+[data-theme="light"] .bg-\[\#13101D\]\/60,
+[data-theme="light"] .bg-\[\#162035\]\/50,
+[data-theme="light"] .bg-\[\#162035\]\/80,
+[data-theme="light"] .hover\:bg-\[\#162035\]:hover,
+[data-theme="light"] .hover\:bg-\[\#162035\]\/80:hover,
+[data-theme="light"] .hover\:bg-\[\#1E293B\]:hover,
+[data-theme="light"] .hover\:bg-\[\#151C2C\]:hover,
+[data-theme="light"] .hover\:bg-\[\#1E2A42\]:hover {
+  background-color: #F8FAFC !important;
+}
+
+[data-theme="light"] .bg-\[\#3B82F6\]\/15 {
+  background-color: #EFF6FF !important;
+}
+
+/* 5. Special Badges & Tints */
+[data-theme="light"] .bg-\[\#052E23\]\/90,
+[data-theme="light"] .bg-\[\#052E23\],
+[data-theme="light"] .bg-\[\#064E3B\]\/60,
+[data-theme="light"] .bg-\[\#064E3B\]\/30,
+[data-theme="light"] .bg-\[\#064E3B\]\/20 {
+  background-color: #ECFDF5 !important;
+}
+
+/* 6. Borders */
+[data-theme="light"] .border-\[\#1E293B\],
+[data-theme="light"] .border-\[\#1E293B\]\/60,
+[data-theme="light"] .border-\[\#26334D\],
+[data-theme="light"] .border-\[\#151b2d\],
+[data-theme="light"] .border-\[\#2e3447\],
+[data-theme="light"] .border-\[\#424754\],
+[data-theme="light"] .border-\[\#0C1324\] {
+  border-color: var(--color-divider) !important;
+}
+
+/* 7. Text Colors & Contrast Enhancements in Light Mode */
+[data-theme="light"] .text-\[\#E2E8F0\],
+[data-theme="light"] .text-\[\#e2e8f0\],
+[data-theme="light"] .text-\[\#dce1fb\],
+[data-theme="light"] .text-\[\#F8FAFC\],
+[data-theme="light"] .text-\[\#f8fafc\] {
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .text-\[\#CBD5E1\],
+[data-theme="light"] .text-\[\#cbd5e1\],
+[data-theme="light"] .text-\[\#94A3B8\],
+[data-theme="light"] .text-\[\#94a3b8\],
+[data-theme="light"] .text-\[\#8C9BB4\],
+[data-theme="light"] .text-\[\#8c9bb4\],
+[data-theme="light"] .text-\[\#7B8CAE\],
+[data-theme="light"] .text-\[\#7b8cae\],
+[data-theme="light"] .text-\[\#c2c6d6\],
+[data-theme="light"] .text-\[\#8c909f\],
+[data-theme="light"] .text-\[\#64748B\],
+[data-theme="light"] .text-\[\#64748b\],
+[data-theme="light"] .text-\[\#A0AEC0\],
+[data-theme="light"] .text-\[\#a0aec0\],
+[data-theme="light"] .text-\[\#475569\],
+[data-theme="light"] .text-slate-400,
+[data-theme="light"] .text-slate-300,
+[data-theme="light"] .text-gray-400,
+[data-theme="light"] .text-gray-300 {
+  color: #334155 !important;
+}
+
+[data-theme="light"] .text-\[\#60A5FA\],
+[data-theme="light"] .text-\[\#60a5fa\],
+[data-theme="light"] .text-\[\#93C5FD\],
+[data-theme="light"] .text-\[\#93c5fd\],
+[data-theme="light"] .text-\[\#3B82F6\],
+[data-theme="light"] .text-blue-400 {
+  color: #1D4ED8 !important;
+}
+
+[data-theme="light"] .text-\[\#00E699\],
+[data-theme="light"] .text-\[\#00e699\],
+[data-theme="light"] .text-\[\#A7F3D0\],
+[data-theme="light"] .text-\[\#a7f3d0\],
+[data-theme="light"] .text-\[\#4EDEA3\],
+[data-theme="light"] .text-\[\#4edea3\] {
+  color: #047857 !important;
+}
+
+[data-theme="light"] .text-\[\#FBBF24\],
+[data-theme="light"] .text-\[\#fbbf24\],
+[data-theme="light"] .text-\[\#F59E0B\],
+[data-theme="light"] .text-\[\#f59e0b\] {
+  color: #B45309 !important;
+}
+
+/* 8. Headings and Titles (except on primary colored buttons or active badges) */
+[data-theme="light"] .text-white:not(.bg-\[\#3B82F6\]):not(.bg-\[\#2563EB\]):not(.bg-blue-600):not(.bg-red-500):not(.bg-emerald-600):not(.bg-\[\#00E699\]) {
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .bg-\[\#3B82F6\] .text-white,
+[data-theme="light"] .bg-\[\#3B82F6\]\.text-white,
+[data-theme="light"] .bg-\[\#2563EB\] .text-white,
+[data-theme="light"] .bg-\[\#2563EB\]\.text-white,
+[data-theme="light"] .bg-blue-600 .text-white,
+[data-theme="light"] .bg-blue-600\.text-white,
+[data-theme="light"] .bg-red-500 .text-white,
+[data-theme="light"] .bg-red-500\.text-white,
+[data-theme="light"] .bg-emerald-600 .text-white,
+[data-theme="light"] .bg-emerald-600\.text-white,
+[data-theme="light"] button.bg-\[\#3B82F6\],
+[data-theme="light"] .cj-button {
+  color: #FFFFFF !important;
+}
+
+/* 9. Modal Overlays & Backdrop Overlays in Light Mode */
+[data-theme="light"] .fixed.inset-0.bg-\[\#0B0F19\]\/80,
+[data-theme="light"] .fixed.inset-0.bg-\[\#0B0F19\]\/85,
+[data-theme="light"] .bg-\[\#0B0F19\]\/80,
+[data-theme="light"] .bg-\[\#0B0F19\]\/85 {
+  background-color: rgba(15, 23, 42, 0.45) !important;
+}
+
+[data-theme="light"] .bg-\[\#0C1324\]\/60,
+[data-theme="light"] .bg-\[\#0C1324\]\/50,
+[data-theme="light"] .bg-\[\#0C1324\]\/80,
+[data-theme="light"] .bg-\[\#0C1324\]\/90 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+}
+
+[data-theme="light"] .bg-\[\#080D1A\]\/80,
+[data-theme="light"] .bg-\[\#151C2C\]\/90,
+[data-theme="light"] .bg-\[\#151C2C\]\/80,
+[data-theme="light"] .bg-\[\#151C2C\]\/60 {
+  background-color: #F1F5F9 !important;
+}
+
+@theme {
+  --color-on-surface-variant: var(--cj-on-surface-variant);
+  --color-on-surface: var(--cj-on-surface);
+  --color-surface-tint: var(--cj-primary);
+  --color-outline-variant: var(--cj-outline-variant);
+  --color-surface-container-high: var(--cj-surface-container-high);
+  --color-surface-container-highest: var(--cj-surface-container-highest);
+  --color-on-primary: var(--cj-on-primary);
+  --color-on-primary-fixed: var(--cj-on-primary-fixed);
+  --color-surface-variant: var(--cj-surface-container-highest);
+  --color-primary-fixed: var(--cj-primary-fixed);
+  --color-primary-fixed-dim: var(--cj-primary-fixed-dim);
+  --color-surface-bright: var(--cj-surface-bright);
+  --color-background: var(--color-bg-base);
+  --color-surface: var(--color-surface);
+  --color-surface-dim: var(--cj-surface-dim);
+  --color-surface-container-low: var(--cj-surface-container-low);
+  --color-outline: var(--cj-outline);
+  --color-on-background: var(--color-text);
+  --color-surface-container: var(--cj-surface-container);
+  --color-surface-container-lowest: var(--cj-surface-container-lowest);
+
+  --spacing-container-margin: 32px;
+  --spacing-stack-sm: 8px;
+  --spacing-stack-lg: 32px;
+  --spacing-gutter: 16px;
+  --spacing-section-gap: 64px;
+  --spacing-unit: 4px;
+  --spacing-stack-md: 16px;
+  --spacing-sidebar-width: 280px;
+  --spacing-container-padding: 32px;
+
+  --font-headline-lg-mobile: Geist;
+  --font-code-sm: JetBrains Mono;
+  --font-body-md: Inter;
+  --font-headline-md: Geist;
+  --font-body-lg: Inter;
+  --font-label-caps: JetBrains Mono;
+  --font-display-lg: Geist;
+  --font-headline-lg: Geist;
+}
+
+.neon-marker {
+  box-shadow: 0 0 4px #adc6ff;
+  border: 1px solid #adc6ff;
+  background: rgba(77, 142, 255, 0.1);
+}
+.ai-message {
+  background: linear-gradient(135deg, rgba(77, 142, 255, 0.1) 0%, rgba(21, 27, 45, 0) 100%);
+  border-left: 2px solid #4d8eff;
+}
+.line-numbers {
+  counter-reset: line;
+}
+.line-numbers > div::before {
+  counter-increment: line;
+  content: counter(line);
+  display: inline-block;
+  width: 2rem;
+  margin-right: 1rem;
+  color: #424754;
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  user-select: none;
+}
+@keyframes draftingPulse {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
+}
+.drafting-pulse {
+  animation: draftingPulse 2s infinite;
+}
+

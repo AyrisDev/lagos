@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+*{box-sizing:border-box}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#e3e5e9;border-radius:8px}
+a{color:#1d5fb0}
+a:hover{color:#164a8a}
+input,textarea,select{font-family:inherit}
+</style>
+</helmet>
+<div style="display:flex;height:100vh;background:#f4f5f7;color:#16181d;font-family:'Plus Jakarta Sans',ui-sans-serif,sans-serif;overflow:hidden">
+
+  <div style="width:264px;flex:none;padding:18px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;min-height:0">
+    <div style="background:#fff;border-radius:20px;padding:14px;box-shadow:0 1px 2px rgba(16,20,30,.04),0 8px 24px rgba(16,20,30,.05);display:flex;align-items:center;gap:10px">
+      <div style="width:38px;height:38px;flex:none;border-radius:50%;background:linear-gradient(135deg,#6b3fc7,#a78bfa);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">EK</div>
+      <div style="min-width:0;flex:1">
+        <div style="font-size:14px;font-weight:700;white-space:nowrap">Av. Elif Kaya</div>
+        <div style="font-size:12px;color:#8b9099">Kurucu Ortak</div>
+      </div>
+      <button type="button" onClick="{{ goCases }}" aria-label="Yeni dosya" style="width:32px;height:32px;flex:none;border-radius:50%;background:#16181d;color:#fff;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+      </button>
+    </div>
+
+    <div style="background:#16181d;border-radius:20px;padding:16px;color:#fff">
+      <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#9198a3;margin-bottom:8px">Sıradaki Duruşma</div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:2px">{{ nextDurusma.dava }}</div>
+      <div style="font-size:12px;color:#9198a3;margin-bottom:10px">{{ nextDurusma.mahkeme }}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:13px;font-weight:600;color:#c9b3ff">{{ nextDurusma.tarih }} · {{ nextDurusma.saat }}</span>
+        <button type="button" onClick="{{ goCalendar }}" style="background:rgba(255,255,255,.12);border:none;color:#fff;border-radius:999px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-height:0">
+      <button type="button" onClick="{{ goOverview }}" style="{{ navStyle.overview }}">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="14" width="7" height="7" rx="2"></rect><rect x="3" y="14" width="7" height="7" rx="2"></rect></svg>
+        <span>Genel Bakış</span>
+      </button>
+      <button type="button" onClick="{{ goCases }}" style="{{ navStyle.cases }}">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 14 1.45-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"></path></svg>
+        <span>Dava Dosyaları</span>
+      </button>
+      <button type="button" onClick="{{ goResearch }}" style="{{ navStyle.research }}">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+        <span>İçtihat Arama</span>
+      </button>
+      <button type="button" onClick="{{ goDrafting }}" style="{{ navStyle.drafting }}">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg>
+        <span>Dilekçe Hazırlama</span>
+      </button>
+      <button type="button" onClick="{{ goCalendar }}" style="{{ navStyle.calendar }}">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="4"></rect><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path></svg>
+        <span>Duruşma Takvimi</span>
+      </button>
+      <button type="button" onClick="{{ goTemplates }}" style="{{ navStyle.templates }}">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 2H8.6c-.4 0-.8.2-1.1.5-.3.3-.5.7-.5 1.1v12.8c0 .4.2.8.5 1.1.3.3.7.5 1.1.5h9.8c.4 0 .8-.2 1.1-.5.3-.3.5-.7.5-1.1V6.5L15.5 2z"></path><path d="M3 7.6v12.8c0 .4.2.8.5 1.1.3.3.7.5 1.1.5h9.8"></path><path d="M15 2v5h5"></path></svg>
+        <span>Belge Şablonları</span>
+      </button>
+      <button type="button" onClick="{{ goClients }}" style="{{ navStyle.clients }}">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        <span>Müvekkil Portalı</span>
+      </button>
+      <button type="button" onClick="{{ goChat }}" style="{{ navStyle.chat }}">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+        <span>Sohbet</span>
+      </button>
+      <button type="button" onClick="{{ goSettings }}" style="{{ navStyle.settings }}">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        <span>Ayarlar</span>
+      </button>
+    </div>
+  </div>
+
+  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;padding:18px 18px 18px 0">
+    <div style="flex:1;background:#fff;border-radius:24px;box-shadow:0 1px 2px rgba(16,20,30,.04),0 8px 24px rgba(16,20,30,.05);display:flex;flex-direction:column;overflow:hidden">
+      <div style="height:64px;flex:none;border-bottom:1px solid #eef0f2;display:flex;align-items:center;justify-content:space-between;padding:0 28px">
+        <div style="font-size:13px;color:#8b9099">LegalOS <span style="opacity:.5">/</span> <span style="color:#16181d;font-weight:600">{{ viewTitle }}</span></div>
+        <button type="button" aria-label="Bildirimler" style="position:relative;width:36px;height:36px;border-radius:50%;background:#f4f5f7;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+          <div style="position:absolute;top:7px;right:8px;width:7px;height:7px;border-radius:50%;background:#e0475b"></div>
+        </button>
+      </div>
+
+      <div style="flex:1;overflow:auto;padding:28px 32px">
+
+        <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <div style="border-radius:20px;padding:28px 32px;margin-bottom:24px;background:linear-gradient(120deg,#fdeee0,#eee4fb 60%,#e3ecfb);position:relative;overflow:hidden">
+              <div style="font-size:13px;font-weight:600;color:#8b6b3f;margin-bottom:6px">8 Ağustos 2026, Cumartesi</div>
+              <div style="font-family:'Plus Jakarta Sans';font-weight:800;font-size:32px;letter-spacing:-0.01em;margin-bottom:16px">İyi günler, Elif</div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <button type="button" onClick="{{ goCases }}" style="{{ quickBtn }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>Yeni Dosya</button>
+                <button type="button" onClick="{{ goDrafting }}" style="{{ quickBtn }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path></svg>Dilekçe Oluştur</button>
+                <button type="button" onClick="{{ goResearch }}" style="{{ quickBtn }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>İçtihat Ara</button>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px">
+              <div style="{{ statCard.blue }}"><div style="{{ statIconWrap.blue }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 14 1.45-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"></path></svg></div><div style="font-size:26px;font-weight:800;margin-top:14px">24</div><div style="font-size:13px;color:#8b9099">Aktif Dosyalar</div></div>
+              <div style="{{ statCard.purple }}"><div style="{{ statIconWrap.purple }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="4"></rect><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path></svg></div><div style="font-size:26px;font-weight:800;margin-top:14px">4</div><div style="font-size:13px;color:#8b9099">Bu Hafta Duruşma</div></div>
+              <div style="{{ statCard.amber }}"><div style="{{ statIconWrap.amber }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path></svg></div><div style="font-size:26px;font-weight:800;margin-top:14px">3</div><div style="font-size:13px;color:#8b9099">Bekleyen Dilekçe</div></div>
+              <div style="{{ statCard.teal }}"><div style="{{ statIconWrap.teal }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg></div><div style="font-size:26px;font-weight:800;margin-top:14px">2</div><div style="font-size:13px;color:#8b9099">Yeni Müvekkil</div></div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+              <div>
+                <div style="font-size:13px;font-weight:700;margin-bottom:12px">Yaklaşan Duruşmalar</div>
+                <div style="display:flex;flex-direction:column;gap:10px">
+                  <sc-for list="{{ upcomingDurusmalar }}" as="d" hint-placeholder-count="3">
+                    <div style="background:#f9fafb;border-radius:16px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center">
+                      <div style="display:flex;align-items:center;gap:12px">
+                        <div style="{{ d.dotStyle }}"></div>
+                        <div>
+                          <div style="font-weight:700;font-size:14px">{{ d.dava }}</div>
+                          <div style="font-size:12px;color:#8b9099">{{ d.tur }} · {{ d.mahkeme }}</div>
+                        </div>
+                      </div>
+                      <div style="text-align:right;flex:none;padding-left:12px">
+                        <div style="font-weight:700;font-size:13px">{{ d.tarih }}</div>
+                        <div style="font-size:12px;color:#8b9099">{{ d.saat }}</div>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div>
+                <div style="font-size:13px;font-weight:700;margin-bottom:12px">Son Dosya Hareketleri</div>
+                <div style="display:flex;flex-direction:column;gap:10px">
+                  <sc-for list="{{ recentDavalar }}" as="c" hint-placeholder-count="4">
+                    <div style="background:#f9fafb;border-radius:16px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center">
+                      <div>
+                        <div style="font-weight:700;font-size:14px">{{ c.muvekkil }}</div>
+                        <div style="font-size:12px;color:#8b9099">{{ c.avukat }}</div>
+                      </div>
+                      <span style="{{ c.tagStyle }}">{{ c.durum }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isCasesList }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px">
+              <div>
+                <h1 style="font-size:26px;margin:0 0 4px;font-weight:800">Dava Dosyaları</h1>
+                <div style="font-size:13px;color:#8b9099">{{ davaCount }} dosya · tamamı büroya ait</div>
+              </div>
+              <button type="button" style="{{ btnPrimary }}">Yeni Dosya<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button>
+            </div>
+            <div style="margin-bottom:16px;max-width:340px;position:relative">
+              <input placeholder="Dosya no, müvekkil veya konu ara…" value="{{ caseQuery }}" onChange="{{ onCaseQueryChange }}" style="{{ inputStyle }};padding-left:38px" />
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#b0b4bc"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+            </div>
+            <div style="border-radius:18px;overflow:hidden;border:1px solid #eef0f2">
+              <table style="width:100%;border-collapse:collapse;font-size:13.5px">
+                <thead><tr style="background:#f9fafb"><th style="{{ th }}">Dosya No</th><th style="{{ th }}">Müvekkil</th><th style="{{ th }}">Konu</th><th style="{{ th }}">Durum</th><th style="{{ th }}">Sorumlu Avukat</th><th style="{{ th }}">Güncelleme</th><th style="{{ th }}"></th></tr></thead>
+                <tbody>
+                  <sc-for list="{{ filteredDavalar }}" as="c" hint-placeholder-count="6">
+                    <tr onClick="{{ c.open }}" style="border-top:1px solid #eef0f2;cursor:pointer">
+                      <td style="{{ td }}">{{ c.no }}</td><td style="{{ td }};font-weight:600">{{ c.muvekkil }}</td><td style="{{ td }}">{{ c.konu }}</td>
+                      <td style="{{ td }}"><span style="{{ c.tagStyle }}">{{ c.durum }}</span></td>
+                      <td style="{{ td }};color:#8b9099">{{ c.avukat }}</td><td style="{{ td }};color:#8b9099">{{ c.tarih }}</td>
+                      <td style="{{ td }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#b0b4bc"><path d="m9 18 6-6-6-6"></path></svg></td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isCaseDetail }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <button type="button" onClick="{{ closeCaseDetail }}" style="{{ btnGhost }};padding-left:0;margin-bottom:12px">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>Dava Dosyalarına Dön
+            </button>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px">
+              <div>
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+                  <h1 style="font-size:24px;margin:0;font-weight:800">{{ selectedCase.no }}</h1>
+                  <span style="{{ selectedCase.tagStyle }}">{{ selectedCase.durum }}</span>
+                </div>
+                <div style="font-size:14px;color:#585d68">{{ selectedCase.muvekkil }} · {{ selectedCase.konu }}</div>
+              </div>
+              <div style="display:flex;gap:10px">
+                <button type="button" onClick="{{ openDraftingForCase }}" style="{{ btnSecondary }}">Dilekçe Oluştur</button>
+                <button type="button" onClick="{{ goCalendar }}" style="{{ btnPrimary }}">Duruşma Ekle</button>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px">
+              <div style="background:#f9fafb;border-radius:14px;padding:14px"><div style="font-size:11px;color:#8b9099;margin-bottom:4px">Sorumlu Avukat</div><div style="font-size:13.5px;font-weight:700">{{ selectedCase.avukat }}</div></div>
+              <div style="background:#f9fafb;border-radius:14px;padding:14px"><div style="font-size:11px;color:#8b9099;margin-bottom:4px">Açılış Tarihi</div><div style="font-size:13.5px;font-weight:700">{{ selectedCase.tarih }}</div></div>
+              <div style="background:#f9fafb;border-radius:14px;padding:14px"><div style="font-size:11px;color:#8b9099;margin-bottom:4px">Dosya No</div><div style="font-size:13.5px;font-weight:700">{{ selectedCase.no }}</div></div>
+              <div style="background:#f9fafb;border-radius:14px;padding:14px"><div style="font-size:11px;color:#8b9099;margin-bottom:4px">Müvekkil</div><div style="font-size:13.5px;font-weight:700">{{ selectedCase.muvekkil }}</div></div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+              <div>
+                <div style="font-size:13px;font-weight:700;margin-bottom:12px">İlgili Duruşmalar</div>
+                <div style="display:flex;flex-direction:column;gap:10px">
+                  <sc-for list="{{ selectedCase.durusmalar }}" as="d" hint-placeholder-count="1">
+                    <div style="background:#f9fafb;border-radius:16px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center">
+                      <div><div style="font-weight:700;font-size:14px">{{ d.tur }}</div><div style="font-size:12px;color:#8b9099">{{ d.mahkeme }}</div></div>
+                      <div style="text-align:right"><div style="font-weight:700;font-size:13px">{{ d.tarih }}</div><div style="font-size:12px;color:#8b9099">{{ d.saat }}</div></div>
+                    </div>
+                  </sc-for>
+                  <sc-if value="{{ selectedCase.noDurusma }}" hint-placeholder-val="{{ false }}">
+                    <div style="color:#b0b4bc;font-size:13px">Planlanmış duruşma yok.</div>
+                  </sc-if>
+                </div>
+              </div>
+              <div>
+                <div style="font-size:13px;font-weight:700;margin-bottom:12px">Belgeler</div>
+                <div style="display:flex;flex-direction:column;gap:10px">
+                  <sc-for list="{{ caseDocs }}" as="doc" hint-placeholder-count="3">
+                    <div style="background:#f9fafb;border-radius:16px;padding:12px 16px;display:flex;align-items:center;gap:10px">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#8b9099"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path></svg>
+                      <span style="font-size:13.5px;font-weight:600;flex:1">{{ doc.ad }}</span>
+                      <span style="font-size:12px;color:#8b9099">{{ doc.tarih }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isResearch }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <h1 style="font-size:26px;margin:0 0 4px;font-weight:800">İçtihat Arama</h1>
+            <div style="font-size:13px;color:#8b9099;margin-bottom:20px">Yargıtay ve emsal karar veritabanında arama yapın</div>
+            <div style="position:relative;max-width:560px;margin-bottom:24px">
+              <input placeholder="Ör. marka hakkına tecavüz, işe iade, boşanma tazminatı…" value="{{ researchQuery }}" onChange="{{ onResearchQueryChange }}" style="{{ inputStyle }};padding-left:40px" />
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#b0b4bc"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <sc-for list="{{ filteredIctihat }}" as="r" hint-placeholder-count="3">
+                <div style="background:#f9fafb;border-radius:18px;padding:18px 20px">
+                  <div style="font-size:12px;font-weight:700;color:#6b3fc7;margin-bottom:6px">{{ r.mahkeme }} · {{ r.no }}</div>
+                  <div style="font-weight:700;font-size:15px;margin-bottom:6px">{{ r.konu }}</div>
+                  <p style="font-size:13.5px;color:#5f6570;margin:0;line-height:1.6">{{ r.ozet }}</p>
+                </div>
+              </sc-for>
+              <sc-if value="{{ noResearchResults }}" hint-placeholder-val="{{ false }}">
+                <div style="color:#8b9099;font-size:13px;padding:16px 0">Sonuç bulunamadı. Farklı bir arama terimi deneyin.</div>
+              </sc-if>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isDrafting }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <h1 style="font-size:26px;margin:0 0 4px;font-weight:800">Dilekçe Hazırlama</h1>
+            <div style="font-size:13px;color:#8b9099;margin-bottom:24px">Dosya ve dilekçe türü seçin, yapay zeka ilk taslağı hazırlasın</div>
+            <div style="display:grid;grid-template-columns:380px 1fr;gap:24px;align-items:start">
+              <div style="display:grid;gap:14px">
+                <div>
+                  <label style="{{ label }}">Dava Dosyası</label>
+                  <select value="{{ draftDava }}" onChange="{{ onDraftDavaChange }}" style="{{ inputStyle }}">
+                    <sc-for list="{{ davalar }}" as="d" hint-placeholder-count="6">
+                      <option value="{{ d.no }}">{{ d.no }} — {{ d.muvekkil }}</option>
+                    </sc-for>
+                  </select>
+                </div>
+                <div>
+                  <label style="{{ label }}">Dilekçe Türü</label>
+                  <select value="{{ draftTur }}" onChange="{{ onDraftTurChange }}" style="{{ inputStyle }}">
+                    <option>Dava Dilekçesi</option>
+                    <option>Cevap Dilekçesi</option>
+                    <option>İtiraz Dilekçesi</option>
+                    <option>Temyiz Dilekçesi</option>
+                    <option>İhtarname</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="{{ label }}">Talep / Açıklama</label>
+                  <textarea rows="5" placeholder="Dilekçede vurgulanmasını istediğiniz noktaları kısaca yazın…" value="{{ draftNotes }}" onChange="{{ onDraftNotesChange }}" style="{{ inputStyle }};resize:vertical;height:auto"></textarea>
+                </div>
+                <button type="button" onClick="{{ generateDraft }}" disabled="{{ isGenerating }}" style="{{ btnPrimary }};width:100%;justify-content:center">
+                  {{ generateLabel }}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path></svg>
+                </button>
+              </div>
+              <div style="background:#f9fafb;border-radius:20px;padding:24px;min-height:420px;display:flex;flex-direction:column">
+                <div style="font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#8b9099;margin-bottom:10px">Taslak Önizleme</div>
+                <sc-if value="{{ hasDraft }}" hint-placeholder-val="{{ false }}">
+                  <div style="white-space:pre-wrap;font-size:13.5px;line-height:1.7">{{ draftText }}</div>
+                </sc-if>
+                <sc-if value="{{ hasDraft }}" hint-placeholder-val="{{ true }}">
+                  <div style="margin-top:auto;padding-top:16px;display:flex;gap:10px">
+                    <button type="button" style="{{ btnSecondary }}">Kopyala</button>
+                    <button type="button" style="{{ btnGhost }}">Word olarak indir<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M7 10l5 5 5-5"></path><path d="M12 15V3"></path></svg></button>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ showDraftEmpty }}" hint-placeholder-val="{{ true }}">
+                  <div style="flex:1;display:flex;align-items:center;justify-content:center;color:#b0b4bc;font-size:13px;text-align:center;padding:24px">Taslak burada görünecek</div>
+                </sc-if>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isCalendar }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <h1 style="font-size:26px;margin:0 0 4px;font-weight:800">Duruşma / Takip Takvimi</h1>
+            <div style="font-size:13px;color:#8b9099;margin-bottom:24px">Ağustos 2026 — tüm büro için birleşik görünüm</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ durusmalar }}" as="d" hint-placeholder-count="4">
+                <div style="background:#f9fafb;border-radius:18px;padding:16px 20px;display:flex;align-items:center;gap:18px">
+                  <div style="{{ d.badgeStyle }}">
+                    <div style="font-weight:800;font-size:17px">{{ d.gun }}</div>
+                    <div style="font-size:10px;text-transform:uppercase;opacity:.85">{{ d.ay }}</div>
+                  </div>
+                  <div style="flex:1">
+                    <div style="font-weight:700;font-size:14px">{{ d.dava }}</div>
+                    <div style="font-size:12px;color:#8b9099">{{ d.mahkeme }}</div>
+                  </div>
+                  <span style="{{ d.tagStyle }}">{{ d.tur }}</span>
+                  <div style="font-size:13px;font-weight:700;width:56px;text-align:right">{{ d.saat }}</div>
+                  <button type="button" style="{{ btnGhost }}">Detay</button>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isTemplates }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px">
+              <div>
+                <h1 style="font-size:26px;margin:0 0 4px;font-weight:800">Belge Şablonları</h1>
+                <div style="font-size:13px;color:#8b9099">Büro genelinde paylaşılan dilekçe ve evrak şablonları</div>
+              </div>
+              <button type="button" style="{{ btnSecondary }}">Şablon Yükle</button>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+              <sc-for list="{{ sablonlar }}" as="s" hint-placeholder-count="6">
+                <div style="background:#f9fafb;border-radius:18px;padding:20px">
+                  <div style="{{ s.pillStyle }}">{{ s.kategori }}</div>
+                  <div style="font-weight:700;font-size:15px;margin:12px 0 6px">{{ s.ad }}</div>
+                  <p style="font-size:13px;color:#5f6570;margin:0 0 14px;line-height:1.55">{{ s.aciklama }}</p>
+                  <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#8b9099">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M7 10l5 5 5-5"></path><path d="M12 15V3"></path></svg>
+                    <span>{{ s.guncelleme }}</span>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isClients }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px">
+              <div>
+                <h1 style="font-size:26px;margin:0 0 4px;font-weight:800">Müvekkil Portalı</h1>
+                <div style="font-size:13px;color:#8b9099">Müvekkillerin dosyalarına güvenli erişimini yönetin</div>
+              </div>
+              <button type="button" style="{{ btnPrimary }}">Davet Gönder</button>
+            </div>
+            <div style="border-radius:18px;overflow:hidden;border:1px solid #eef0f2">
+              <table style="width:100%;border-collapse:collapse;font-size:13.5px">
+                <thead><tr style="background:#f9fafb"><th style="{{ th }}">Müvekkil</th><th style="{{ th }}">Tür</th><th style="{{ th }}">Dosya Sayısı</th><th style="{{ th }}">Erişim</th><th style="{{ th }}">Son Giriş</th><th style="{{ th }}"></th></tr></thead>
+                <tbody>
+                  <sc-for list="{{ muvekkiller }}" as="m" hint-placeholder-count="5">
+                    <tr style="border-top:1px solid #eef0f2">
+                      <td style="{{ td }}">
+                        <div style="display:flex;align-items:center;gap:10px">
+                          <div style="{{ m.avatarStyle }}">{{ m.initial }}</div>
+                          <span style="font-weight:600">{{ m.ad }}</span>
+                        </div>
+                      </td>
+                      <td style="{{ td }};color:#8b9099">{{ m.tur }}</td><td style="{{ td }}">{{ m.davaSayisi }}</td>
+                      <td style="{{ td }}"><span style="{{ m.tagStyle }}">{{ m.erisim }}</span></td>
+                      <td style="{{ td }};color:#8b9099">{{ m.sonGiris }}</td>
+                      <td style="{{ td }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#b0b4bc"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m2 6 10 7L22 6"></path></svg></td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isChat }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;height:100%">
+            <div style="flex:1;overflow:auto;display:flex;flex-direction:column;gap:14px;padding-bottom:16px">
+              <sc-if value="{{ chatEmpty }}" hint-placeholder-val="{{ true }}">
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px">
+                  <div style="font-size:26px;font-weight:800">Bugün nasıl yardımcı olabilirim, Elif?</div>
+                  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;max-width:560px">
+                    <button type="button" onClick="{{ onQuickChat0 }}" style="{{ chatQuickCard }}"><strong>Dilekçe özetle</strong><span style="color:#8b9099;font-size:12.5px">Bir dilekçenin ana taleplerini özetle</span></button>
+                    <button type="button" onClick="{{ onQuickChat1 }}" style="{{ chatQuickCard }}"><strong>Emsal karar bul</strong><span style="color:#8b9099;font-size:12.5px">Konuya uygun Yargıtay kararı öner</span></button>
+                    <button type="button" onClick="{{ onQuickChat2 }}" style="{{ chatQuickCard }}"><strong>Süre hesapla</strong><span style="color:#8b9099;font-size:12.5px">Temyiz/itiraz süresini hesapla</span></button>
+                    <button type="button" onClick="{{ onQuickChat3 }}" style="{{ chatQuickCard }}"><strong>Sözleşme incele</strong><span style="color:#8b9099;font-size:12.5px">Riskli maddeleri işaretle</span></button>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-for list="{{ chatMessages }}" as="m" hint-placeholder-count="0">
+                <div style="{{ m.rowStyle }}"><div style="{{ m.bubbleStyle }}">{{ m.text }}</div></div>
+              </sc-for>
+              <sc-if value="{{ chatSending }}" hint-placeholder-val="{{ false }}">
+                <div style="align-self:flex-start;background:#f9fafb;border-radius:16px;padding:12px 16px;font-size:13.5px;color:#8b9099">Yazıyor…</div>
+              </sc-if>
+            </div>
+            <div style="border-top:1px solid #eef0f2;padding-top:14px;display:flex;gap:10px;align-items:flex-end">
+              <textarea rows="1" placeholder="Bir soru sorun…" value="{{ chatInput }}" onChange="{{ onChatInputChange }}" style="{{ inputStyle }};flex:1;resize:none"></textarea>
+              <button type="button" onClick="{{ sendChat }}" aria-label="Gönder" style="width:42px;height:42px;flex:none;border-radius:50%;background:#16181d;color:#fff;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"></path><path d="m5 12 7-7 7 7"></path></svg>
+              </button>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+          <div style="max-width:640px">
+            <h1 style="font-size:26px;margin:0 0 4px;font-weight:800">Ayarlar</h1>
+            <div style="font-size:13px;color:#8b9099;margin-bottom:24px">Profil, büro ve bildirim tercihlerinizi yönetin</div>
+
+            <div style="background:#f9fafb;border-radius:18px;padding:22px;margin-bottom:18px;display:grid;gap:14px">
+              <div style="font-size:13px;font-weight:700;margin-bottom:2px">Profil</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+                <div><label style="{{ label }}">Ad Soyad</label><input value="{{ settingsName }}" onChange="{{ onSettingsNameChange }}" style="{{ inputStyle }}" /></div>
+                <div><label style="{{ label }}">Ünvan</label><input value="{{ settingsTitle }}" onChange="{{ onSettingsTitleChange }}" style="{{ inputStyle }}" /></div>
+              </div>
+              <div><label style="{{ label }}">E-posta</label><input value="{{ settingsEmail }}" onChange="{{ onSettingsEmailChange }}" style="{{ inputStyle }}" /></div>
+              <div><label style="{{ label }}">Büro Adı</label><input value="{{ settingsFirm }}" onChange="{{ onSettingsFirmChange }}" style="{{ inputStyle }}" /></div>
+            </div>
+
+            <div style="background:#f9fafb;border-radius:18px;padding:22px;margin-bottom:18px;display:grid;gap:14px">
+              <div style="font-size:13px;font-weight:700;margin-bottom:2px">Bildirimler</div>
+              <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer">
+                <span style="font-size:13.5px">Duruşma hatırlatmaları (e-posta)</span>
+                <input type="checkbox" checked="{{ notifyEmail }}" onChange="{{ onNotifyEmailChange }}" style="width:18px;height:18px;accent-color:#16181d" />
+              </label>
+              <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer">
+                <span style="font-size:13.5px">Mobil bildirimler</span>
+                <input type="checkbox" checked="{{ notifyMobile }}" onChange="{{ onNotifyMobileChange }}" style="width:18px;height:18px;accent-color:#16181d" />
+              </label>
+              <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer">
+                <span style="font-size:13.5px">Yeni müvekkil davetleri</span>
+                <input type="checkbox" checked="{{ notifyInvites }}" onChange="{{ onNotifyInvitesChange }}" style="width:18px;height:18px;accent-color:#16181d" />
+              </label>
+            </div>
+
+            <div style="background:#16181d;border-radius:18px;padding:22px;color:#fff;display:flex;align-items:center;justify-content:space-between">
+              <div>
+                <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#9198a3;margin-bottom:6px">Plan</div>
+                <div style="font-size:16px;font-weight:700">LegalOS Kurumsal</div>
+                <div style="font-size:12px;color:#9198a3;margin-top:2px">6 kullanıcı · yenileme 1 Eylül 2026</div>
+              </div>
+              <button type="button" style="{{ btnSecondary }}">Planı Yönet</button>
+            </div>
+          </div>
+        </sc-if>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: {&quot;width&quot;: 1440, &quot;height&quot;: 900},
+  &quot;defaultView&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;overview&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;options&quot;: [&quot;overview&quot;, &quot;cases&quot;, &quot;research&quot;, &quot;drafting&quot;, &quot;calendar&quot;, &quot;templates&quot;, &quot;clients&quot;, &quot;chat&quot;, &quot;settings&quot;], &quot;section&quot;: &quot;Davranış&quot;},
+  &quot;draftTone&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;formal&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;options&quot;: [&quot;formal&quot;, &quot;concise&quot;], &quot;section&quot;: &quot;Davranış&quot;}
+}">
+const NAV_BASE = {
+  display: 'flex', alignItems: 'center', gap: '10px', padding: '11px 14px',
+  border: 'none', background: 'transparent', font: 'inherit', fontSize: '13.5px',
+  fontWeight: 600, color: '#585d68', cursor: 'pointer', textAlign: 'left', width: '100%', borderRadius: '12px'
+};
+const ACTIVE = { background: '#16181d', color: '#fff' };
+
+const PILL = { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', fontSize: '11.5px', fontWeight: 700, borderRadius: '999px' };
+const CATS = {
+  blue: { bg: '#e3ecfb', fg: '#1d5fb0' },
+  purple: { bg: '#ece3fb', fg: '#6b3fc7' },
+  amber: { bg: '#fdecd1', fg: '#9a5b12' },
+  teal: { bg: '#d6f5ec', fg: '#0f7a5c' },
+  rose: { bg: '#fbe3e8', fg: '#c23b56' },
+  gray: { bg: '#eceef1', fg: '#5b6472' }
+};
+function pillStyle(kind) { const c = CATS[kind] || CATS.gray; return { ...PILL, background: c.bg, color: c.fg }; }
+function dotColor(kind) { return (CATS[kind] || CATS.gray).fg; }
+
+const DAVALAR = [
+  { no: '2026/1452', muvekkil: 'Yılmaz İnşaat A.Ş.', konu: 'Ticari Alacak Davası', durum: 'Aktif', cat: 'teal', avukat: 'Av. Elif Kaya', tarih: '05.08.2026' },
+  { no: '2026/1398', muvekkil: 'Deniz Software Ltd.', konu: 'İş Sözleşmesi Feshi', durum: 'Duruşma Bekliyor', cat: 'amber', avukat: 'Av. Mert Aydın', tarih: '02.08.2026' },
+  { no: '2026/1287', muvekkil: 'Aslan Gıda San.', konu: 'Marka İhlali', durum: 'Temyiz', cat: 'purple', avukat: 'Av. Elif Kaya', tarih: '28.07.2026' },
+  { no: '2026/1204', muvekkil: 'Selin Yurdakul', konu: 'Boşanma Davası', durum: 'Aktif', cat: 'teal', avukat: 'Av. Burak Şen', tarih: '22.07.2026' },
+  { no: '2026/1150', muvekkil: 'Kaya Lojistik', konu: 'Sözleşme İhlali', durum: 'Kapandı', cat: 'gray', avukat: 'Av. Mert Aydın', tarih: '15.07.2026' },
+  { no: '2026/1098', muvekkil: 'Naz Turizm', konu: 'Vergi İtirazı', durum: 'Aktif', cat: 'teal', avukat: 'Av. Elif Kaya', tarih: '10.07.2026' }
+];
+const DURUSMALAR = [
+  { gun: '10', ay: 'Ağu', tarih: '10 Ağustos', saat: '09:30', dava: '2026/1398 — Deniz Software Ltd.', tur: 'Ön İnceleme', cat: 'blue', mahkeme: 'İstanbul 4. İş Mahkemesi' },
+  { gun: '12', ay: 'Ağu', tarih: '12 Ağustos', saat: '11:00', dava: '2026/1452 — Yılmaz İnşaat A.Ş.', tur: 'Tanık Dinleme', cat: 'teal', mahkeme: 'Ankara 7. Asliye Ticaret Mahkemesi' },
+  { gun: '14', ay: 'Ağu', tarih: '14 Ağustos', saat: '14:15', dava: '2026/1204 — Selin Yurdakul', tur: 'Duruşma', cat: 'purple', mahkeme: 'İstanbul 12. Aile Mahkemesi' },
+  { gun: '19', ay: 'Ağu', tarih: '19 Ağustos', saat: '10:00', dava: '2026/1287 — Aslan Gıda San.', tur: 'Temyiz İncelemesi', cat: 'amber', mahkeme: 'Yargıtay 11. Hukuk Dairesi' }
+];
+const SABLONLAR = [
+  { kategori: 'Ticaret Hukuku', cat: 'blue', ad: 'Alacak Davası Dilekçesi', aciklama: 'Ticari alacakların tahsili için standart dava dilekçesi şablonu.', guncelleme: '3 gün önce' },
+  { kategori: 'İş Hukuku', cat: 'amber', ad: 'İşe İade Dilekçesi', aciklama: 'Haksız fesih sonrası işe iade talebi için dilekçe.', guncelleme: '1 hafta önce' },
+  { kategori: 'Aile Hukuku', cat: 'purple', ad: 'Boşanma Dava Dilekçesi', aciklama: 'Anlaşmalı ve çekişmeli boşanma süreçleri için taslak.', guncelleme: '2 hafta önce' },
+  { kategori: 'İcra Hukuku', cat: 'gray', ad: 'İtiraz Dilekçesi', aciklama: 'İcra takibine itiraz için genel şablon.', guncelleme: '5 gün önce' },
+  { kategori: 'Fikri Mülkiyet', cat: 'rose', ad: 'Marka İhlali İhtarnamesi', aciklama: 'Marka hakkı ihlaline karşı ihtarname taslağı.', guncelleme: '1 ay önce' },
+  { kategori: 'Vergi Hukuku', cat: 'teal', ad: 'Vergi İtiraz Dilekçesi', aciklama: 'Vergi/ceza ihbarnamesine itiraz için dilekçe.', guncelleme: '2 ay önce' }
+];
+const MUVEKKILLER = [
+  { ad: 'Yılmaz İnşaat A.Ş.', tur: 'Kurumsal', davaSayisi: 3, erisim: 'Aktif', cat: 'teal', sonGiris: 'Bugün' },
+  { ad: 'Deniz Software Ltd.', tur: 'Kurumsal', davaSayisi: 1, erisim: 'Aktif', cat: 'teal', sonGiris: 'Dün' },
+  { ad: 'Selin Yurdakul', tur: 'Bireysel', davaSayisi: 1, erisim: 'Davetli', cat: 'blue', sonGiris: '—' },
+  { ad: 'Aslan Gıda San.', tur: 'Kurumsal', davaSayisi: 2, erisim: 'Aktif', cat: 'teal', sonGiris: '3 gün önce' },
+  { ad: 'Naz Turizm', tur: 'Kurumsal', davaSayisi: 1, erisim: 'Pasif', cat: 'gray', sonGiris: '2 hafta önce' }
+];
+const ICTIHAT = [
+  { mahkeme: 'Yargıtay 11. Hukuk Dairesi', no: '2024/3312 E. 2024/8821 K.', konu: 'Marka hakkına tecavüzün tespiti ve önlenmesi', ozet: 'Tescilli markanın iltibas oluşturacak şekilde kullanılması, haksız rekabet hükümleriyle birlikte değerlendirilir.' },
+  { mahkeme: 'Yargıtay 9. Hukuk Dairesi', no: '2023/9104 E. 2024/1187 K.', konu: 'İş sözleşmesinin işveren tarafından haksız fesih', ozet: 'Fesih bildiriminde somut ve geçerli sebep gösterilmemesi işe iade talebini haklı kılar.' },
+  { mahkeme: 'Yargıtay 3. Hukuk Dairesi', no: '2022/6650 E. 2023/4410 K.', konu: 'Boşanma davasında maddi ve manevi tazminat', ozet: 'Tazminat miktarının belirlenmesinde tarafların ekonomik ve sosyal durumu esas alınır.' }
+];
+
+const INPUT_STYLE = { width: '100%', boxSizing: 'border-box', border: '1px solid #e5e7eb', background: '#f9fafb', borderRadius: '12px', padding: '10px 14px', fontSize: '13.5px', color: '#16181d', outline: 'none' };
+const LABEL_STYLE = { display: 'block', fontSize: '12px', fontWeight: 600, color: '#585d68', marginBottom: '6px' };
+const BTN_BASE = { display: 'inline-flex', alignItems: 'center', gap: '8px', borderRadius: '999px', padding: '10px 18px', fontSize: '13.5px', fontWeight: 700, border: 'none', cursor: 'pointer' };
+const BTN_PRIMARY = { ...BTN_BASE, background: '#16181d', color: '#fff' };
+const BTN_SECONDARY = { ...BTN_BASE, background: '#f4f5f7', color: '#16181d' };
+const BTN_GHOST = { ...BTN_BASE, background: 'transparent', color: '#585d68', padding: '10px 14px' };
+const QUICK_BTN = { ...BTN_BASE, background: 'rgba(255,255,255,.7)', color: '#16181d', padding: '9px 16px', fontSize: '13px' };
+const TH_STYLE = { textAlign: 'left', padding: '12px 16px', fontSize: '11.5px', fontWeight: 700, color: '#8b9099', textTransform: 'uppercase', letterSpacing: '.04em' };
+const TD_STYLE = { padding: '13px 16px' };
+
+class Component extends DCLogic {
+  state = {
+    view: null,
+    caseQuery: '',
+    researchQuery: '',
+    draftDava: DAVALAR[0].no,
+    draftTur: 'Dava Dilekçesi',
+    draftNotes: '',
+    draftText: null,
+    isGenerating: false,
+    chatMessages: [],
+    chatInput: '',
+    chatSending: false,
+    settingsName: 'Elif Kaya',
+    settingsTitle: 'Kurucu Ortak',
+    settingsEmail: 'elif.kaya@kayaaydin.law',
+    settingsFirm: 'Kaya & Aydın Hukuk Bürosu',
+    notifyEmail: true,
+    notifyMobile: false,
+    notifyInvites: true,
+    selectedCaseNo: null
+  };
+
+  CASE_DOCS = [
+    { ad: 'Dava Dilekçesi.pdf', tarih: '05.08.2026' },
+    { ad: 'Vekaletname.pdf', tarih: '05.08.2026' },
+    { ad: 'Sözleşme Örneği.pdf', tarih: '02.08.2026' }
+  ];
+
+  setView(v) { this.setState({ view: v }); }
+
+  CHAT_REPLIES = [
+    'Dosyanızı inceledim: ana talepler alacak miktarının tahsili ve gecikme faizi üzerine kurulu. İsterseniz taslak dilekçe bölümünden bir özet oluşturabilirim.',
+    'Benzer olaylarda Yargıtay 11. Hukuk Dairesi\'nin 2024/3312 E. sayılı kararı emsal gösterilebilir — İçtihat Arama bölümünde detaylarını bulabilirsiniz.',
+    'Tebliğ tarihinden itibaren yasal süre 2 haftadır; bu dosya için son gün 19 Ağustos 2026 olarak hesaplanır.',
+    'Sözleşmede fesih bildirim süresi ve cezai şart maddeleri riskli görünüyor; detaylı incelemek için ilgili belgeyi paylaşabilirsiniz.'
+  ];
+
+  pushChat(text, who) {
+    const msg = { text, who,
+      rowStyle: { display: 'flex', justifyContent: who === 'me' ? 'flex-end' : 'flex-start' },
+      bubbleStyle: { maxWidth: '70%', borderRadius: '16px', padding: '12px 16px', fontSize: '13.5px', lineHeight: 1.55,
+        background: who === 'me' ? '#16181d' : '#f9fafb', color: who === 'me' ? '#fff' : '#16181d' } };
+    this.setState(s => ({ chatMessages: [...s.chatMessages, msg] }));
+  }
+
+  sendChat = () => {
+    const text = this.state.chatInput.trim();
+    if (!text) return;
+    this.pushChat(text, 'me');
+    this.setState({ chatInput: '', chatSending: true });
+    setTimeout(() => {
+      const reply = this.CHAT_REPLIES[Math.floor(Math.random() * this.CHAT_REPLIES.length)];
+      this.pushChat(reply, 'ai');
+      this.setState({ chatSending: false });
+    }, 900);
+  };
+
+  sendQuickChat(text) {
+    this.pushChat(text, 'me');
+    this.setState({ chatSending: true });
+    setTimeout(() => {
+      const reply = this.CHAT_REPLIES[Math.floor(Math.random() * this.CHAT_REPLIES.length)];
+      this.pushChat(reply, 'ai');
+      this.setState({ chatSending: false });
+    }, 900);
+  }
+
+  generateDraft = () => {
+    this.setState({ isGenerating: true });
+    setTimeout(() => {
+      const dava = DAVALAR.find(d => d.no === this.state.draftDava) || DAVALAR[0];
+      const tone = this.props.draftTone ?? 'formal';
+      const notes = this.state.draftNotes.trim();
+      const opening = tone === 'concise'
+        ? `${dava.no} sayılı dosya kapsamında ${dava.muvekkil} adına sunulan ${this.state.draftTur.toLowerCase()} taslağıdır.`
+        : `Sayın Mahkeme Başkanlığı'na sunulmak üzere, ${dava.no} sayılı dosya kapsamında müvekkilim ${dava.muvekkil} vekili sıfatıyla aşağıdaki hususları arz ve talep ederim.`;
+      const body = `Konu: ${dava.konu}. ${notes ? notes + ' ' : ''}Yukarıda özetlenen olgular ve mevcut mevzuat hükümleri birlikte değerlendirildiğinde, müvekkilimin taleplerinin haklı ve yerinde olduğu görülmektedir.`;
+      const closing = tone === 'concise' ? 'Gereğinin takdirine sunulur.' : 'Yukarıda arz edilen nedenlerle talebimizin kabulüne karar verilmesini saygıyla arz ve talep ederiz.';
+      this.setState({ draftText: `${opening}\n\n${body}\n\n${closing}\n\n${dava.avukat}`, isGenerating: false });
+    }, 900);
+  };
+
+  renderVals() {
+    const view = this.state.view ?? (this.props.defaultView ?? 'overview');
+    const navStyleFor = (id) => ({ ...NAV_BASE, ...(view === id ? ACTIVE : {}) });
+
+    const durusmalarAll = DURUSMALAR.map(d => ({ ...d, tagStyle: pillStyle(d.cat) }));
+    const davalarTagged = DAVALAR.map(d => ({
+      ...d, tagStyle: pillStyle(d.cat),
+      open: () => this.setState({ selectedCaseNo: d.no }),
+      durusmalar: durusmalarAll.filter(x => x.dava.startsWith(d.no)),
+      get noDurusma() { return this.durusmalar.length === 0; }
+    }));
+    const selectedCaseRaw = davalarTagged.find(d => d.no === this.state.selectedCaseNo);
+    const selectedCase = selectedCaseRaw ? { ...selectedCaseRaw, noDurusma: selectedCaseRaw.durusmalar.length === 0 } : null;
+    const q = this.state.caseQuery.toLowerCase();
+    const filteredDavalar = davalarTagged.filter(d =>
+      !q || d.no.toLowerCase().includes(q) || d.muvekkil.toLowerCase().includes(q) || d.konu.toLowerCase().includes(q));
+
+    const rq = this.state.researchQuery.trim().toLowerCase();
+    const filteredIctihat = !rq ? ICTIHAT : ICTIHAT.filter(r =>
+      r.konu.toLowerCase().includes(rq) || r.ozet.toLowerCase().includes(rq) || r.mahkeme.toLowerCase().includes(rq));
+
+    const muvekkillerTagged = MUVEKKILLER.map(m => ({ ...m, tagStyle: pillStyle(m.cat), initial: m.ad.charAt(0), avatarStyle: { width: '28px', height: '28px', borderRadius: '50%', background: (CATS[m.cat] || CATS.gray).bg, color: (CATS[m.cat] || CATS.gray).fg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700 } }));
+
+    const sablonlarTagged = SABLONLAR.map(s => ({ ...s, pillStyle: pillStyle(s.cat) }));
+
+    const durusmalarTagged = DURUSMALAR.map(d => ({
+      ...d, tagStyle: pillStyle(d.cat),
+      dotStyle: { width: '8px', height: '8px', borderRadius: '50%', background: dotColor(d.cat), flex: 'none' },
+      badgeStyle: { width: '54px', height: '54px', flex: 'none', borderRadius: '14px', background: dotColor(d.cat), color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }
+    }));
+
+    const titles = {
+      overview: 'Genel Bakış', cases: 'Dava Dosyaları', research: 'İçtihat Arama',
+      drafting: 'Dilekçe Hazırlama', calendar: 'Duruşma Takvimi', templates: 'Belge Şablonları', clients: 'Müvekkil Portalı',
+      chat: 'Sohbet', settings: 'Ayarlar'
+    };
+
+    return {
+      viewTitle: titles[view],
+      isOverview: view === 'overview', isCases: view === 'cases',
+      isCasesList: view === 'cases' && !this.state.selectedCaseNo,
+      isCaseDetail: view === 'cases' && !!this.state.selectedCaseNo,
+      selectedCase, caseDocs: this.CASE_DOCS,
+      closeCaseDetail: () => this.setState({ selectedCaseNo: null }),
+      openDraftingForCase: () => this.setState({ selectedCaseNo: null, view: 'drafting', draftDava: this.state.selectedCaseNo }),
+      isResearch: view === 'research',
+      isDrafting: view === 'drafting', isCalendar: view === 'calendar', isTemplates: view === 'templates', isClients: view === 'clients',
+      isChat: view === 'chat', isSettings: view === 'settings',
+      navStyle: {
+        overview: navStyleFor('overview'), cases: navStyleFor('cases'), research: navStyleFor('research'),
+        drafting: navStyleFor('drafting'), calendar: navStyleFor('calendar'), templates: navStyleFor('templates'), clients: navStyleFor('clients'),
+        chat: navStyleFor('chat'), settings: navStyleFor('settings')
+      },
+      goOverview: () => this.setView('overview'), goCases: () => this.setView('cases'), goResearch: () => this.setView('research'),
+      goDrafting: () => this.setView('drafting'), goCalendar: () => this.setView('calendar'), goTemplates: () => this.setView('templates'), goClients: () => this.setView('clients'),
+      goChat: () => this.setView('chat'), goSettings: () => this.setView('settings'),
+
+      chatMessages: this.state.chatMessages,
+      chatEmpty: this.state.chatMessages.length === 0,
+      chatInput: this.state.chatInput,
+      onChatInputChange: (e) => this.setState({ chatInput: e.target.value }),
+      chatSending: this.state.chatSending,
+      sendChat: this.sendChat,
+      chatQuickCard: { textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '4px', background: '#f9fafb', border: 'none', borderRadius: '14px', padding: '14px 16px', cursor: 'pointer', fontSize: '13.5px' },
+      onQuickChat0: () => this.sendQuickChat('Bu dilekçeyi özetler misin?'),
+      onQuickChat1: () => this.sendQuickChat('Marka ihlali için emsal karar önerir misin?'),
+      onQuickChat2: () => this.sendQuickChat('Temyiz süresini hesaplar mısın?'),
+      onQuickChat3: () => this.sendQuickChat('Bu sözleşmedeki riskli maddeleri işaretler misin?'),
+
+      settingsName: this.state.settingsName, onSettingsNameChange: (e) => this.setState({ settingsName: e.target.value }),
+      settingsTitle: this.state.settingsTitle, onSettingsTitleChange: (e) => this.setState({ settingsTitle: e.target.value }),
+      settingsEmail: this.state.settingsEmail, onSettingsEmailChange: (e) => this.setState({ settingsEmail: e.target.value }),
+      settingsFirm: this.state.settingsFirm, onSettingsFirmChange: (e) => this.setState({ settingsFirm: e.target.value }),
+      notifyEmail: this.state.notifyEmail, onNotifyEmailChange: (e) => this.setState({ notifyEmail: e.target.checked }),
+      notifyMobile: this.state.notifyMobile, onNotifyMobileChange: (e) => this.setState({ notifyMobile: e.target.checked }),
+      notifyInvites: this.state.notifyInvites, onNotifyInvitesChange: (e) => this.setState({ notifyInvites: e.target.checked }),
+
+      nextDurusma: durusmalarTagged[0],
+      upcomingDurusmalar: durusmalarTagged.slice(0, 3),
+      recentDavalar: davalarTagged.slice(0, 4),
+      davaCount: DAVALAR.length,
+      caseQuery: this.state.caseQuery,
+      onCaseQueryChange: (e) => this.setState({ caseQuery: e.target.value }),
+      filteredDavalar,
+
+      researchQuery: this.state.researchQuery,
+      onResearchQueryChange: (e) => this.setState({ researchQuery: e.target.value }),
+      filteredIctihat,
+      noResearchResults: filteredIctihat.length === 0,
+
+      davalar: DAVALAR,
+      draftDava: this.state.draftDava,
+      onDraftDavaChange: (e) => this.setState({ draftDava: e.target.value }),
+      draftTur: this.state.draftTur,
+      onDraftTurChange: (e) => this.setState({ draftTur: e.target.value }),
+      draftNotes: this.state.draftNotes,
+      onDraftNotesChange: (e) => this.setState({ draftNotes: e.target.value }),
+      generateDraft: this.generateDraft,
+      isGenerating: this.state.isGenerating,
+      generateLabel: this.state.isGenerating ? 'Oluşturuluyor…' : 'AI ile Taslak Oluştur',
+      hasDraft: !!this.state.draftText && !this.state.isGenerating,
+      showDraftEmpty: !this.state.draftText && !this.state.isGenerating,
+      draftText: this.state.draftText,
+
+      durusmalar: durusmalarTagged,
+      sablonlar: sablonlarTagged,
+      muvekkiller: muvekkillerTagged,
+
+      statCard: {
+        blue: { background: '#f9fafb', borderRadius: '18px', padding: '18px' },
+        purple: { background: '#f9fafb', borderRadius: '18px', padding: '18px' },
+        amber: { background: '#f9fafb', borderRadius: '18px', padding: '18px' },
+        teal: { background: '#f9fafb', borderRadius: '18px', padding: '18px' }
+      },
+      statIconWrap: {
+        blue: { width: '34px', height: '34px', borderRadius: '10px', background: CATS.blue.bg, color: CATS.blue.fg, display: 'flex', alignItems: 'center', justifyContent: 'center' },
+        purple: { width: '34px', height: '34px', borderRadius: '10px', background: CATS.purple.bg, color: CATS.purple.fg, display: 'flex', alignItems: 'center', justifyContent: 'center' },
+        amber: { width: '34px', height: '34px', borderRadius: '10px', background: CATS.amber.bg, color: CATS.amber.fg, display: 'flex', alignItems: 'center', justifyContent: 'center' },
+        teal: { width: '34px', height: '34px', borderRadius: '10px', background: CATS.teal.bg, color: CATS.teal.fg, display: 'flex', alignItems: 'center', justifyContent: 'center' }
+      },
+      quickBtn: QUICK_BTN, btnPrimary: BTN_PRIMARY, btnSecondary: BTN_SECONDARY, btnGhost: BTN_GHOST,
+      inputStyle: INPUT_STYLE, label: LABEL_STYLE, th: TH_STYLE, td: TD_STYLE
+    };
+  }
+}
+</script>
+</body>
+</html>
