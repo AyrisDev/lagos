@@ -61,7 +61,7 @@
   "build": {
     "appId": "com.ayrisdev.ayrislegal",
     "productName": "Ayris Legal",
-    "buildVersion": "19",
+    "buildVersion": "20",
     "asar": true,
     "asarUnpack": [
       "**/node_modules/@napi-rs/canvas/**",
