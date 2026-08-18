@@ -1,6 +1,6 @@
 {
   "name": "ayrislegal",
-  "version": "0.1.27",
+  "version": "0.1.18",
   "private": true,
   "main": "electron/main.js",
   "scripts": {
@@ -61,6 +61,7 @@
   "build": {
     "appId": "com.ayrisdev.ayrislegal",
     "productName": "Ayris Legal",
+    "buildVersion": "19",
     "asar": true,
     "asarUnpack": [
       "**/node_modules/@napi-rs/canvas/**",

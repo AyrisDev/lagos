@@ -6,12 +6,16 @@ const path = require('path');
 const pkgPath = path.join(__dirname, '..', 'package.json');
 const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
 
-const parts = String(pkg.version || '0.1.0').split('.').map((n) => parseInt(n, 10) || 0);
-while (parts.length < 3) parts.push(0);
-parts[2] += 1;
+// build nesnesi yoksa oluştur
+if (!pkg.build) {
+  pkg.build = {};
+}
 
-const newVersion = parts.join('.');
-pkg.version = newVersion;
+// buildVersion numarasını artır (örn: 19, 20, 21...)
+const currentBuildVersion = parseInt(pkg.build.buildVersion || '18', 10);
+const newBuildVersion = currentBuildVersion + 1;
+
+pkg.build.buildVersion = String(newBuildVersion);
 
 fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
-console.log(`\n🚀 [Auto-Version] Sürüm numarası otomatik güncellendi: v${newVersion}\n`);
+console.log(`\n🚀 [Auto-Build] Sürüm: v${pkg.version} | Build Numarası: ${newBuildVersion}\n`);
