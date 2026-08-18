@@ -16,6 +16,30 @@ function getLicenseApi(): LicenseElectronApi | undefined {
   return (window as unknown as { electron?: LicenseElectronApi }).electron;
 }
 
+// Admin panelinden profiles.license_status='active' yapılan (ve isteğe bağlı
+// license_expires_at ile süreli) kullanıcılar için — lisans anahtarı girmeye
+// hiç gerek kalmadan doğrudan erişim. license_expires_at geçmişse (admin
+// "1 yıl sonra bitsin" demişse) otomatik olarak false döner, ekstra bir iş
+// yapmaya gerek yok — fetchTrialInfo()'daki diffMs<=0 deseniyle aynı mantık.
+async function fetchActiveStatus(): Promise<boolean> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return false;
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('license_status, license_expires_at')
+      .eq('id', session.user.id)
+      .single();
+
+    if (!profile || profile.license_status !== 'active') return false;
+    if (profile.license_expires_at && new Date(profile.license_expires_at).getTime() <= Date.now()) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Supabase profiles tablosundan trial bilgisini çek
 async function fetchTrialInfo(): Promise<{ daysLeft: number; endDate: Date } | null> {
   try {
@@ -69,7 +93,12 @@ export default function LicenseGate({ children }: { children: React.ReactNode })
     setError('');
     const api = getLicenseApi();
     if (!api?.licenseValidate) {
-      // Electron dışında (tarayıcı/dev mod) — trial bilgisini Supabase'den al
+      // Electron dışında (tarayıcı/dev mod) — önce admin'in doğrudan
+      // aktifleştirdiği durumu kontrol et, sonra trial bilgisini Supabase'den al
+      if (await fetchActiveStatus()) {
+        setState('valid');
+        return;
+      }
       const trialInfo = await fetchTrialInfo();
       if (trialInfo) {
         setTrialDaysLeft(trialInfo.daysLeft);
@@ -98,7 +127,14 @@ export default function LicenseGate({ children }: { children: React.ReactNode })
       return;
     }
 
-    // Geçerli lisans anahtarı YOKSA Supabase'den trial günlerini kontrol et
+    // Geçerli lisans anahtarı YOKSA — admin panelinden doğrudan aktifleştirilmiş mi kontrol et
+    // (bkz. fetchActiveStatus — artık lisans anahtarı girmeye gerek kalmadan erişim açabiliyor)
+    if (await fetchActiveStatus()) {
+      setState('valid');
+      return;
+    }
+
+    // O da yoksa Supabase'den trial günlerini kontrol et
     const trialInfo = await fetchTrialInfo();
     if (trialInfo) {
       setTrialDaysLeft(trialInfo.daysLeft);
