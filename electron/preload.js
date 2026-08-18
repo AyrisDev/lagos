@@ -23,12 +23,6 @@ contextBridge.exposeInMainWorld('electron', {
   hasImportAuth: () => ipcRenderer.invoke('has-import-auth'),
   scanCaseFolder: (caseTitle) => ipcRenderer.invoke('scan-case-folder', caseTitle),
   runImportQueue: () => ipcRenderer.invoke('run-import-queue'),
-  // Online lisans doğrulama — uygulama açılışında ana içerik gösterilmeden önce
-  // çalışır (bkz. src/components/LicenseGate.tsx).
-  licenseGetDeviceId: () => ipcRenderer.invoke('license:get-device-id'),
-  licenseActivate: (licenseKey, email) => ipcRenderer.invoke('license:activate', licenseKey, email),
-  licenseValidate: (email) => ipcRenderer.invoke('license:validate', email),
-  licenseClear: () => ipcRenderer.invoke('license:clear'),
   // E-posta ile kayıt — device_id, trial'ın aynı cihazda tekrar kullanılmasını engeller.
   authRegisterWithEmail: (email, password) => ipcRenderer.invoke('auth:register', { email, password }),
   // Otomatik güncelleme — lisans doğrulandıktan sonra çağrılır (bkz.
@@ -66,10 +60,8 @@ contextBridge.exposeInMainWorld('electron', {
     ipcRenderer.on('backup-progress', listener);
     return () => ipcRenderer.removeListener('backup-progress', listener);
   },
-  // Google OAuth ekranını sistem tarayıcısında açar (PRD §19 — Electron içinde
-  // manuel OAuth/token yönetimi yapılmıyor).
-  openExternalUrl: (url) => ipcRenderer.invoke('open-external-url', url),
-  // Google Drive Restore — Faz 3 (bkz. electron/lib/restoreQueue.js).
+  // Dış URL'yi sistem tarayıcısında açar (örn. ayrislegal.com/pricing).
+  openUrl: (url) => ipcRenderer.invoke('open-external-url', url),
   restoreListFiles: () => ipcRenderer.invoke('restore:list-files'),
   restoreStart: () => ipcRenderer.invoke('restore:start'),
   restoreGetStatus: () => ipcRenderer.invoke('restore:get-status'),
@@ -85,11 +77,6 @@ contextBridge.exposeInMainWorld('electron', {
   crashSetReportingEnabled: (enabled) => ipcRenderer.invoke('crash:set-reporting-enabled', enabled),
   crashGetSafeModePrompt: () => ipcRenderer.invoke('crash:get-safe-mode-prompt'),
   crashResolveSafeMode: (enterSafeMode) => ipcRenderer.invoke('crash:resolve-safe-mode', enterSafeMode),
-  // Deep linking (OAuth)
-  onAuthCallback: (callback) => {
-    const listener = (_event, url) => callback(url);
-    ipcRenderer.on('auth:callback', listener);
-    return () => ipcRenderer.removeListener('auth:callback', listener);
-  },
+
 });
 

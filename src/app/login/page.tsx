@@ -4,14 +4,12 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useStore } from '@/store/useStore';
-import { Loader2, Mail, Lock, UserPlus, LogIn, Globe } from 'lucide-react';
+import { Loader2, Mail, Lock, UserPlus, LogIn } from 'lucide-react';
 
 // Electron'un preload.js üzerinden gelen API — tarayıcıda undefined olur.
 interface ElectronApi {
   licenseGetDeviceId?: () => Promise<string>;
   authRegisterWithEmail?: (email: string, password: string) => Promise<{ ok: boolean; status: number; data: { error?: string; code?: string }; networkError?: boolean }>;
-  openExternalUrl?: (url: string) => void;
-  onAuthCallback?: (callback: (url: string) => void) => () => void;
 }
 function getElectronApi(): ElectronApi | undefined {
   return (window as unknown as { electron?: ElectronApi }).electron;
@@ -24,50 +22,12 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   const router = useRouter();
   const setUser = useStore((state) => state.setUser);
 
-  useEffect(() => {
-    const electronApi = getElectronApi();
-    if (!electronApi?.onAuthCallback) return;
-
-    const cleanup = electronApi.onAuthCallback(async (url) => {
-      try {
-        setGoogleLoading(true);
-        // ayrislegal://auth/callback#access_token=...&refresh_token=...
-        const hash = url.split('#')[1];
-        if (!hash) return;
-        
-        const params = new URLSearchParams(hash);
-        const access_token = params.get('access_token');
-        const refresh_token = params.get('refresh_token');
-
-        if (access_token && refresh_token) {
-          const { data, error } = await supabase.auth.setSession({
-            access_token,
-            refresh_token
-          });
-
-          if (error) throw error;
-          if (data.user) {
-            setUser(data.user);
-            router.push('/');
-          }
-        }
-      } catch (err) {
-        console.error('Deep link auth error:', err);
-        setError('Oturum açılamadı.');
-      } finally {
-        setGoogleLoading(false);
-      }
-    });
-
-    return cleanup;
-  }, [router, setUser]);
 
   // ────────────────────────────── Login ──────────────────────────────
   const handleLogin = async (e: React.FormEvent) => {
@@ -144,44 +104,6 @@ export default function Login() {
     }
   };
 
-  // ────────────────────────────── Google OAuth ──────────────────────────────
-  const handleGoogleLogin = async () => {
-    setGoogleLoading(true);
-    setError(null);
-    try {
-      const electronApi = getElectronApi();
-      // Electron build ise, custom protocol'ümüze (deep link) yönlendir;
-      // Web build ise, uygulamanın normal url'ine yönlendir (window.location.origin).
-      const redirectTo = electronApi 
-        ? 'ayrislegal://auth/callback' 
-        : `${window.location.origin}/auth/v1/callback`;
-
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo,
-          skipBrowserRedirect: !!electronApi, // Electron'da URL'yi kendimiz açıyoruz
-        },
-      });
-      if (error) throw error;
-
-      if (data?.url) {
-        if (electronApi?.openExternalUrl) {
-          // Electron build: sistem tarayıcısında aç
-          electronApi.openExternalUrl(data.url);
-          setSuccess('Google giriş sayfası tarayıcınızda açıldı. Lütfen girişi tamamlayın.');
-        } else {
-          // Tarayıcı / dev mod: normal yönlendirme
-          window.location.href = data.url;
-        }
-      }
-
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Google ile giriş başlatılamadı.');
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
 
 
   // ────────────────────────────── UI Helpers ──────────────────────────────
@@ -303,27 +225,7 @@ export default function Login() {
           </button>
         </form>
 
-        {/* Ayırıcı */}
-        <div className="flex items-center my-5 gap-3">
-          <div className="flex-1 h-px bg-white/10" />
-          <span className="text-gray-600 text-xs">veya</span>
-          <div className="flex-1 h-px bg-white/10" />
-        </div>
 
-        {/* Google ile giriş */}
-        <button
-          type="button"
-          onClick={handleGoogleLogin}
-          disabled={googleLoading}
-          className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {googleLoading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Globe className="w-4 h-4" />
-          )}
-          Google ile {tab === 'login' ? 'Giriş Yap' : 'Kayıt Ol'}
-        </button>
       </div>
     </div>
   );

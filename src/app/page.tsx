@@ -120,11 +120,6 @@ export default function Home() {
   }, [router]);
 
   const handleSignOut = async () => {
-    // Clear device license cache before signing out
-    const win = window as unknown as Record<string, { license?: { clear?: () => Promise<void> } }>;
-    if (typeof window !== 'undefined' && win.electron?.license?.clear) {
-      await win.electron.license.clear();
-    }
     await supabase.auth.signOut();
     router.push('/login');
   };

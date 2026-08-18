@@ -12,8 +12,6 @@
   <!-- Ağ İzinleri -->
   <key>com.apple.security.network.client</key>
   <true/>
-  <key>com.apple.security.network.server</key>
-  <true/>
   <!-- Dosya İzinleri -->
   <key>com.apple.security.files.user-selected.read-write</key>
   <true/>

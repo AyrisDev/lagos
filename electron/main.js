@@ -103,6 +103,18 @@ function buildProductionMenu() {
     {
       label: 'Pencere',
       submenu: [
+        {
+          label: 'Ayris Legal\'ı Göster',
+          click: () => {
+            if (!mainWindow || mainWindow.isDestroyed()) {
+              createWindow();
+            } else {
+              mainWindow.show();
+              mainWindow.focus();
+            }
+          },
+        },
+        { type: 'separator' },
         { role: 'minimize' },
         { role: 'close' },
         ...(isMac ? [{ role: 'zoom' }, { type: 'separator' }, { role: 'front' }] : []),
@@ -189,12 +201,7 @@ ipcMain.handle('run-import-queue', () => {
 // çalışmadığını (destek/hata ayıklama için) kendisi teyit edebilsin.
 ipcMain.handle('app:get-version', () => app.getVersion());
 
-// Online lisans doğrulama (bkz. electron/lib/licenseService.js) — renderer
-// backend'e hiç doğrudan bağlanmıyor, hepsi bu IPC üzerinden ana süreçte yapılıyor.
-ipcMain.handle('license:get-device-id', () => licenseService.getDeviceId());
-ipcMain.handle('license:activate', (_event, licenseKey, email) => licenseService.activateLicense(licenseKey, email));
-ipcMain.handle('license:validate', (_event, email) => licenseService.validateLicense(email));
-ipcMain.handle('license:clear', () => licenseService.clearLicense());
+
 
 // E-posta + şifre ile kayıt (renderer'dan çağrılır, bkz. src/app/login/page.tsx).
 // Device ID bu süreçten alınır ve backend'e iletilir — aynı cihazda ikinci
@@ -248,8 +255,7 @@ ipcMain.handle('restore:list-files', () => restoreQueue.listBackupFiles());
 ipcMain.handle('restore:start', () => restoreQueue.startRestore());
 ipcMain.handle('restore:get-status', () => restoreQueue.getStatus());
 
-// Google OAuth ekranını (backend'in /connect döndürdüğü URL) sistem
-// tarayıcısında açar — PRD §19: OAuth Electron içinde manuel yönetilmiyor.
+// Dış URL'yi (örn. ayrislegal.com/pricing) sistem tarayıcısında açar.
 ipcMain.handle('open-external-url', (_event, url) => {
   if (typeof url === 'string' && /^https:\/\//.test(url)) {
     shell.openExternal(url);
