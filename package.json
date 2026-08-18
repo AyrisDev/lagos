@@ -1,6 +1,6 @@
 {
   "name": "ayrislegal",
-  "version": "0.1.18",
+  "version": "0.1.27",
   "private": true,
   "main": "electron/main.js",
   "scripts": {
@@ -10,7 +10,7 @@
     "start": "next start",
     "lint": "eslint",
     "build:mac": "node scripts/bump-version.js && next build && electron-builder --mac",
-    "build:mas": "node scripts/bump-version.js && node scripts/build-mas-universal.js",
+    "build:mas": "node scripts/bump-version.js && next build && electron-builder --mac mas --universal",
     "build:mas:arm64": "node scripts/bump-version.js && next build && electron-builder --mac mas --arm64",
     "build:mas:x64": "node scripts/bump-version.js && next build && electron-builder --mac mas --x64",
     "build:win": "node scripts/bump-version.js && next build && electron-builder --win",
@@ -79,7 +79,7 @@
         {
           "target": "pkg",
           "arch": [
-            "arm64"
+            "universal"
           ]
         }
       ],
@@ -87,7 +87,9 @@
       "entitlements": "build/entitlements.mas.plist",
       "entitlementsInherit": "build/entitlements.mas.inherit.plist",
       "hardenedRuntime": false,
-      "gatekeeperAssess": false
+      "gatekeeperAssess": false,
+      "x64ArchFiles": "*",
+      "mergeASARs": false
     },
     "masDev": {
       "type": "development",
