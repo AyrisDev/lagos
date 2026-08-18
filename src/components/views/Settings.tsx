@@ -22,7 +22,8 @@ export function Settings({ currentUser, theme, toggleTheme, handleSignOut }: { c
   const [passwordError, setPasswordError] = useState('');
   const [passwordChanged, setPasswordChanged] = useState(false);
 
-  const [licenseInfo, setLicenseInfo] = useState<{ plan: string; status: string; expires_at: string | null; max_devices: number } | null>(null);
+  const [licenseInfo, setLicenseInfo] = useState<{ plan: string; status: string; expires_at: string | null; max_devices?: number } | null>(null);
+  const [profileLicense, setProfileLicense] = useState<{ plan: string; status: string; expires_at: string | null; max_devices?: number } | null>(null);
   const [licenseInfoLoading, setLicenseInfoLoading] = useState(true);
 
   const token = useSupabaseToken();
@@ -64,7 +65,7 @@ export function Settings({ currentUser, theme, toggleTheme, handleSignOut }: { c
     if (!user) { setProfileLoading(false); return; }
     const { data } = await supabase
       .from('profiles')
-      .select('full_name, bar_name, bar_association_no, created_at')
+      .select('full_name, bar_name, bar_association_no, created_at, license_status, license_expires_at, trial_end_date')
       .eq('id', user.id)
       .single();
     if (data) {
@@ -72,12 +73,36 @@ export function Settings({ currentUser, theme, toggleTheme, handleSignOut }: { c
       setBarName(data.bar_name || '');
       setBarNo(data.bar_association_no || '');
 
-      if (data.created_at) {
+      if (data.license_status === 'active') {
+        const isExpired = data.license_expires_at && new Date(data.license_expires_at).getTime() <= Date.now();
+        setProfileLicense({
+          status: isExpired ? 'expired' : 'active',
+          expires_at: data.license_expires_at || null,
+          plan: 'Professional',
+        });
+        setTrialDaysLeft(null);
+      } else if (data.license_status === 'trial' && data.trial_end_date) {
+        const diffMs = new Date(data.trial_end_date).getTime() - Date.now();
+        const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+        setTrialDaysLeft(days > 0 ? days : 0);
+        setProfileLicense({
+          status: days > 0 ? 'trial' : 'expired',
+          expires_at: data.trial_end_date,
+          plan: 'Deneme',
+        });
+      } else if (data.license_status === 'expired') {
+        setTrialDaysLeft(0);
+        setProfileLicense({
+          status: 'expired',
+          expires_at: data.license_expires_at || data.trial_end_date || null,
+          plan: 'Deneme',
+        });
+      } else if (data.created_at) {
         const createdDate = new Date(data.created_at);
         const now = new Date();
         const diffTime = Math.abs(now.getTime() - createdDate.getTime());
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        setTrialDaysLeft(diffDays <= 3 ? 3 - diffDays : 0);
+        setTrialDaysLeft(diffDays <= 7 ? 7 - diffDays : 0);
       }
     }
     setProfileLoading(false);
@@ -384,8 +409,9 @@ export function Settings({ currentUser, theme, toggleTheme, handleSignOut }: { c
     loadSupportHistory();
   };
 
-  const planLabel = licenseInfo?.status === 'active' ? 'Aktif' : licenseInfo?.status === 'revoked' ? 'İptal Edildi' : licenseInfo?.status === 'expired' ? 'Süresi Dolmuş' : '—';
-  const planIsActive = licenseInfo?.status === 'active';
+  const effectiveLicense = licenseInfo || profileLicense;
+  const planLabel = effectiveLicense?.status === 'active' ? 'Aktif' : effectiveLicense?.status === 'revoked' ? 'İptal Edildi' : effectiveLicense?.status === 'expired' ? 'Süresi Dolmuş' : effectiveLicense?.status === 'trial' ? 'Deneme' : '—';
+  const planIsActive = effectiveLicense?.status === 'active';
 
   const navItems: { id: SettingsSection; label: string; icon: React.ReactNode }[] = [
     { id: 'kullanici', label: 'Kullanıcı Bilgileri', icon: Icon.users },
@@ -553,7 +579,40 @@ export function Settings({ currentUser, theme, toggleTheme, handleSignOut }: { c
             <div className="bg-[#0C1324] border border-[#1E293B] rounded-2xl p-6 shadow-inner flex flex-col gap-4">
               {licenseInfoLoading || profileLoading ? (
                 <div className="text-[13px] font-mono text-[#64748B]">Yükleniyor...</div>
-              ) : !licenseInfo && trialDaysLeft !== null && trialDaysLeft > 0 ? (
+              ) : effectiveLicense?.status === 'active' ? (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex flex-col gap-3">
+                    <div>
+                      <div className="text-[16px] font-extrabold text-white mb-1">
+                        Mevcut Paket: <span className="text-[#00E699]">{effectiveLicense.plan} · {planLabel}</span>
+                      </div>
+                      <p className="text-[13px] font-mono text-[#8C9BB4]">
+                        Tüm gelişmiş yapay zeka ve mevzuat fonksiyonları aktif.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 text-[13px] font-mono bg-[#080D1A] border border-[#1E293B] p-3.5 rounded-xl">
+                      <div>
+                        <span className="text-[#64748B] block text-[11px]">BİTİŞ TARİHİ</span>
+                        <span className="text-white font-bold">{effectiveLicense.expires_at ? new Date(effectiveLicense.expires_at).toLocaleDateString('tr-TR') : 'Süresiz Lisans'}</span>
+                      </div>
+                      <div>
+                        <span className="text-[#64748B] block text-[11px]">HESAP DURUMU</span>
+                        <span className="text-white font-bold">{effectiveLicense.max_devices ? (effectiveLicense.max_devices + ' Cihaz') : 'Aktif Üyelik'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <a
+                    href="https://ayrislegal.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-[#3B82F6] hover:bg-[#2563EB] text-white font-mono font-bold text-[13px] px-5 py-2.5 rounded-xl transition-all shadow-md cursor-pointer whitespace-nowrap self-start sm:self-center"
+                  >
+                    Planı Yönet ↗
+                  </a>
+                </div>
+              ) : trialDaysLeft !== null && trialDaysLeft > 0 ? (
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div>
                     <div className="text-[16px] font-extrabold text-white mb-1">
@@ -572,41 +631,23 @@ export function Settings({ currentUser, theme, toggleTheme, handleSignOut }: { c
                     Lisans Satın Al ↗
                   </a>
                 </div>
-              ) : !licenseInfo ? (
-                <div className="text-[13px] font-mono text-[#64748B]">
-                  Lisans bilgisi alınamadı veya süresi dolmuş. Lütfen lisansınızı yenileyin.
-                </div>
               ) : (
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="flex flex-col gap-3">
-                    <div>
-                      <div className="text-[16px] font-extrabold text-white mb-1">
-                        Mevcut Paket: <span className={planIsActive ? 'text-[#00E699]' : 'text-red-400'}>{licenseInfo.plan} · {planLabel}</span>
-                      </div>
-                      <p className="text-[13px] font-mono text-[#8C9BB4]">
-                        {planIsActive ? 'Tüm gelişmiş yapay zeka ve mevzuat fonksiyonları aktif.' : 'Lütfen paketinizi yenileyin.'}
-                      </p>
+                  <div>
+                    <div className="text-[16px] font-extrabold text-white mb-1">
+                      Mevcut Plan: <span className="text-red-400">Süresi Dolmuş</span>
                     </div>
-
-                    <div className="grid grid-cols-2 gap-3 text-[13px] font-mono bg-[#080D1A] border border-[#1E293B] p-3.5 rounded-xl">
-                      <div>
-                        <span className="text-[#64748B] block text-[11px]">BİTİŞ TARİHİ</span>
-                        <span className="text-white font-bold">{licenseInfo.expires_at ? new Date(licenseInfo.expires_at).toLocaleDateString('tr-TR') : 'Süresiz Lisans'}</span>
-                      </div>
-                      <div>
-                        <span className="text-[#64748B] block text-[11px]">MAKS. CİHAZ KONTENJANI</span>
-                        <span className="text-white font-bold">{licenseInfo.max_devices} Cihaz</span>
-                      </div>
-                    </div>
+                    <p className="text-[13px] font-mono text-[#8C9BB4]">
+                      Lisans veya deneme süreniz sona erdi. Lütfen hesabınızı yenileyin.
+                    </p>
                   </div>
-
                   <a
                     href="https://ayrislegal.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-[#3B82F6] hover:bg-[#2563EB] text-white font-mono font-bold text-[13px] px-5 py-2.5 rounded-xl transition-all shadow-md cursor-pointer whitespace-nowrap self-start sm:self-center"
+                    className="bg-[#3B82F6] hover:bg-[#2563EB] text-white font-mono font-bold text-[13px] px-5 py-2.5 rounded-xl transition-all shadow-md cursor-pointer whitespace-nowrap"
                   >
-                    Planı Yükselt ↗
+                    Lisans Satın Al ↗
                   </a>
                 </div>
               )}

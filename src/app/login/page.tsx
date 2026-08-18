@@ -63,12 +63,36 @@ export default function Login() {
     }
 
     try {
-      // Her ortamda (Electron + tarayıcı) Supabase signUp ile doğrudan kayıt.
-      // Device ID double-trial kontrolü, sonraki adımda arka planda yapılır.
+      const electron = getElectronApi();
+      if (electron?.authRegisterWithEmail) {
+        const res = await electron.authRegisterWithEmail(email, password);
+        if (!res.ok) {
+          if (res.status === 409 && res.data?.code === 'DEVICE_TRIAL_USED') {
+            setError(res.data.error || 'Bu cihazda daha önce deneme sürümü kullanılmıştır. Lütfen mevcut hesabınıza giriş yapın veya lisans satın alın.');
+          } else {
+            setError(res.data?.error || 'Kayıt oluşturulamadı.');
+          }
+          return;
+        }
+
+        // Backend kaydı başarılı oldu — Supabase auth ile oturum aç
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInError) {
+          setSuccess('Kayıt başarılı! 7 günlük deneme sürümünüz başladı. Lütfen giriş yapın.');
+          setTab('login');
+          return;
+        }
+        if (signInData.user) {
+          setUser(signInData.user);
+          router.push('/');
+        }
+        return;
+      }
+
+      // Tarayıcı fallback
       const { data, error: signUpError } = await supabase.auth.signUp({ email, password });
 
       if (signUpError) {
-        // Supabase hata mesajlarını kullanıcı dostu Türkçeye çevir
         const msg = signUpError.message?.toLowerCase() ?? '';
         if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('user already exists')) {
           setError('Bu e-posta adresi zaten kayıtlı.');
@@ -87,13 +111,11 @@ export default function Login() {
         return;
       }
 
-      // Kayıt başarılı — oturum hemen açıldıysa (email confirm kapalı) uygulamaya yönlendir
       if (data.session) {
         setUser(data.user);
         router.push('/');
       } else {
-        // Email onayı gerektiren Supabase konfigürasyonu
-        setSuccess('Kayıt başarılı! 3 günlük deneme sürümünüz başladı. Lütfen e-postanızı onaylayın ve giriş yapın.');
+        setSuccess('Kayıt başarılı! 7 günlük deneme sürümünüz başladı. Lütfen e-postanızı onaylayın ve giriş yapın.');
         setTab('login');
         setEmail(email);
       }

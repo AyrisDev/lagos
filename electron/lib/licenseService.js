@@ -61,10 +61,29 @@ function writeState(state) {
 // Bilgisayar başına kalıcı, rastgele bir kimlik — bir kere üretilip şifreli
 // durum dosyasında saklanır. license_key temizlense (clearLicense) bile
 // device_id aynı kalır ki backend "aynı cihaz" olarak tanımaya devam etsin.
+function getHardwareId() {
+  const { execSync } = require('child_process');
+  try {
+    if (process.platform === 'darwin') {
+      const out = execSync('ioreg -rd1 -c IOPlatformExpertDevice', { encoding: 'utf8', timeout: 3000 });
+      const match = out.match(/"IOPlatformUUID"\s*=\s*"([^"]+)"/);
+      if (match && match[1]) return 'mac-' + match[1].toLowerCase();
+    } else if (process.platform === 'win32') {
+      const out = execSync('wmic csproduct get uuid', { encoding: 'utf8', timeout: 3000 });
+      const lines = out.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      if (lines.length > 1 && lines[1] !== 'UUID') return 'win-' + lines[1].toLowerCase();
+    }
+  } catch (e) {
+    // fallback
+  }
+  return null;
+}
+
 function getDeviceId() {
   const state = readState();
   if (state?.device_id) return state.device_id;
-  const deviceId = crypto.randomUUID();
+  const hwId = getHardwareId();
+  const deviceId = hwId || crypto.randomUUID();
   writeState({ ...(state || {}), device_id: deviceId });
   return deviceId;
 }

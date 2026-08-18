@@ -9,6 +9,10 @@
   <string>955Q2CT9X5.com.ayrisdev.ayrislegal</string>
   <key>com.apple.developer.team-identifier</key>
   <string>955Q2CT9X5</string>
+  <key>com.apple.security.application-groups</key>
+  <array>
+    <string>955Q2CT9X5.com.ayrisdev.ayrislegal</string>
+  </array>
   <!-- Ağ İzinleri -->
   <key>com.apple.security.network.client</key>
   <true/>
@@ -17,10 +21,12 @@
   <true/>
   <key>com.apple.security.files.bookmarks.app-scope</key>
   <true/>
-  <!-- JIT & Memory İzinleri -->
+  <!-- JIT & Memory İzinleri (Electron/V8 Hardened Runtime için zorunlu) -->
   <key>com.apple.security.cs.allow-jit</key>
   <true/>
   <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+  <true/>
+  <key>com.apple.security.cs.allow-dyld-environment-variables</key>
   <true/>
   <key>com.apple.security.cs.disable-library-validation</key>
   <true/>

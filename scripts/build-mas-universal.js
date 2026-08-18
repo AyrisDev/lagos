@@ -91,10 +91,14 @@ async function main() {
     platform: 'mas',
     type: 'distribution',
     provisioningProfile: PROVISIONING_PROFILE,
-    entitlements: ENTITLEMENTS,
-    entitlementsInherit: ENTITLEMENTS_INHERIT,
-    hardenedRuntime: false,
-    gatekeeperAssess: false,
+    preAutoEntitlements: false,
+    optionsForFile: (filePath) => {
+      const isTopLevel = filePath === UNIVERSAL_APP;
+      return {
+        entitlements: isTopLevel ? ENTITLEMENTS : ENTITLEMENTS_INHERIT,
+        hardenedRuntime: true,
+      };
+    },
   });
   console.log('✅ Kod imzalama tamamlandı.');
 
