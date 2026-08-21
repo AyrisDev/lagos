@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { View, CaseRow, CalendarEventRow } from '@/types';
 import { formatRelativeTr } from '@/lib/utils';
+import { getUyapNotifications, UyapNotificationItem } from '@/lib/localData';
 
 interface OverviewProps {
   setView: (v: View) => void;
@@ -15,6 +16,8 @@ interface SystemLogItem {
   timeStr: string;
   createdAt: string;
   viewTarget?: View;
+  badge?: string;
+  badgeColor?: string;
 }
 
 interface UrgentTaskItem {
@@ -26,6 +29,63 @@ interface UrgentTaskItem {
   viewTarget: View;
 }
 
+function formatUyapLog(item: UyapNotificationItem): SystemLogItem {
+  let icon = '⚡';
+  let badge = 'UYAP • CANLI';
+  let badgeColor = 'bg-blue-500/15 text-blue-400 border-blue-500/30';
+  let title = item.baslik || 'UYAP Dosya Hareketi';
+
+  const kat = item.kategori || '';
+  if (kat === 'BILIRKISI') {
+    icon = '🩺';
+    badge = 'UYAP • BİLİRKİŞİ';
+    badgeColor = 'bg-purple-500/15 text-purple-400 border-purple-500/30';
+    title = 'Bilirkişi Raporu / Mütalaa';
+  } else if (kat === 'KARAR') {
+    icon = '⚖️';
+    badge = 'UYAP • KARAR';
+    badgeColor = 'bg-amber-500/15 text-amber-400 border-amber-500/30';
+    title = 'Mahkeme Kararı / Tensip';
+  } else if (kat === 'ICRA') {
+    icon = '💰';
+    badge = 'UYAP • İCRA';
+    badgeColor = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30';
+    title = 'İcra Tahsilat / Reddiyat';
+  } else if (kat === 'TEBLIGAT') {
+    icon = '📬';
+    badge = 'UYAP • TEBLİGAT';
+    badgeColor = 'bg-blue-500/15 text-blue-400 border-blue-500/30';
+    title = 'Tebligat / Müzekkere';
+  } else if (kat === 'DILEKCE') {
+    icon = '✍️';
+    badge = 'UYAP • DİLEKÇE';
+    badgeColor = 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30';
+    title = 'Dilekçe / İtiraz';
+  } else if (kat === 'VEKIL') {
+    icon = '👤';
+    badge = 'UYAP • VEKALET';
+    badgeColor = 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30';
+    title = 'Taraf / Vekalet Kaydı';
+  }
+
+  let description = item.mesaj || item.baslik;
+  if (item.birim_adi && item.dosya_no && !description.includes(item.dosya_no)) {
+    description = `${item.birim_adi} (${item.dosya_no}) - ${description}`;
+  }
+
+  return {
+    id: `uyap-${item.id}`,
+    icon,
+    title,
+    description,
+    timeStr: formatRelativeTr(item.gonderilme_tarihi || item.created_at || new Date().toISOString()),
+    createdAt: item.gonderilme_tarihi || item.created_at || new Date().toISOString(),
+    viewTarget: 'cases',
+    badge,
+    badgeColor,
+  };
+}
+
 export function Overview({ setView }: OverviewProps) {
   const [stats, setStats] = useState({ casesCount: 0, clientsCount: 0, hearingsCount: 0 });
   const [nextHearing, setNextHearing] = useState<CalendarEventRow | null>(null);
@@ -34,7 +94,7 @@ export function Overview({ setView }: OverviewProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    (async () => {
+    const loadData = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { setLoading(false); return; }
@@ -47,16 +107,14 @@ export function Overview({ setView }: OverviewProps) {
           { count: hearingsCount },
           { data: evData },
           { data: cData },
-          { data: docData },
-          { data: draftData }
+          uyapNotifications
         ] = await Promise.all([
           supabase.from('cases').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('kind', 'case'),
           supabase.from('clients').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
           supabase.from('events').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
           supabase.from('events').select('*').eq('user_id', user.id).gte('date', todayStr).order('date', { ascending: true }).limit(10),
           supabase.from('cases').select('id, title, created_at').eq('user_id', user.id).eq('kind', 'case').order('created_at', { ascending: false }).limit(5),
-          supabase.from('documents').select('id, filename, uploaded_at, case_id').order('uploaded_at', { ascending: false }).limit(5),
-          supabase.from('drafts').select('id, petition_type, created_at').order('created_at', { ascending: false }).limit(5)
+          getUyapNotifications(30)
         ]);
 
         setStats({
@@ -72,53 +130,17 @@ export function Overview({ setView }: OverviewProps) {
           setNextHearing(null);
         }
 
-        // 2. Dynamic Sistem İşlemi Günlüğü
+        // 2. Dynamic Sistem İşlemi Günlüğü (SADECE UYAP Eklentisi Bildirimleri)
         const logs: SystemLogItem[] = [];
 
-        if (Array.isArray(docData)) {
-          docData.forEach(d => {
-            logs.push({
-              id: `doc-${d.id}`,
-              icon: '📄',
-              title: 'Evrak / Belge Yüklendi',
-              description: `"${d.filename || 'Belge'}" sisteme yüklendi ve işlendi.`,
-              timeStr: formatRelativeTr(d.uploaded_at || new Date().toISOString()),
-              createdAt: d.uploaded_at || new Date().toISOString(),
-              viewTarget: 'cases'
-            });
-          });
-        }
-
-        if (Array.isArray(draftData)) {
-          draftData.forEach(dr => {
-            logs.push({
-              id: `draft-${dr.id}`,
-              icon: '✍️',
-              title: 'Dilekçe Taslağı Oluşturuldu',
-              description: `"${dr.petition_type || 'Dilekçe Taslağı'}" inceleme için kaydedildi.`,
-              timeStr: formatRelativeTr(dr.created_at || new Date().toISOString()),
-              createdAt: dr.created_at || new Date().toISOString(),
-              viewTarget: 'drafting'
-            });
-          });
-        }
-
-        if (Array.isArray(cData)) {
-          cData.forEach(c => {
-            logs.push({
-              id: `case-${c.id}`,
-              icon: '⚖️',
-              title: 'Dava Dosyası İçe Aktarıldı',
-              description: `"${c.title || 'Dava Dosyası'}" sisteme kaydedildi.`,
-              timeStr: formatRelativeTr(c.created_at || new Date().toISOString()),
-              createdAt: c.created_at || new Date().toISOString(),
-              viewTarget: 'cases'
-            });
+        if (Array.isArray(uyapNotifications) && uyapNotifications.length > 0) {
+          uyapNotifications.forEach(un => {
+            logs.push(formatUyapLog(un));
           });
         }
 
         logs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setSystemLogs(logs.slice(0, 5));
+        setSystemLogs(logs.slice(0, 15));
 
         // 3. Dynamic Acil İşlemler
         const urgent: UrgentTaskItem[] = [];
@@ -179,7 +201,18 @@ export function Overview({ setView }: OverviewProps) {
       } finally {
         setLoading(false);
       }
-    })();
+    };
+
+    loadData();
+
+    // Electron canlı bildirim akışı dinleyicisi
+    const unbind = (window as any)?.electron?.onUyapNotificationsSynced?.(() => {
+      loadData();
+    });
+
+    return () => {
+      if (typeof unbind === 'function') unbind();
+    };
   }, []);
 
   return (
@@ -205,68 +238,68 @@ export function Overview({ setView }: OverviewProps) {
         </div>
       </div>
 
-      {/* Main Two-Column Outer Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Main Grid: Left 2 Cols (Stats + Logs), Right 1 Col (Urgent Tasks) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
 
         {/* LEFT COLUMN (2 Spans): Aktif Dosyalar Card (Top Left) + Sistem İşlem Günlüğü (Bottom Left) */}
         <div className="lg:col-span-2 flex flex-col gap-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            {/* Card 1: Aktif Dava Dosyaları */}
-            <div
+
+          {/* Top Row Stat Cards (Side-by-Side: 1. Aktif Dosyalar, 2. En Yakın Duruşma) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+            {/* Stat Card 1: Aktif Dava Dosyaları */}
+            <div 
               onClick={() => setView('cases')}
-              className="relative group bg-[var(--color-surface)] border border-[var(--color-divider)] hover:border-[#3B82F6]/60 rounded-2xl p-6 cursor-pointer transition-all duration-300 shadow-sm flex flex-col justify-between overflow-hidden"
+              className="bg-[var(--color-surface)] border border-[var(--color-divider)] rounded-2xl p-5 shadow-sm flex flex-col justify-between gap-4 cursor-pointer hover:border-[#3B82F6]/50 transition-all group"
             >
-              <div className="flex items-start justify-between mb-3">
-                <span className="text-[11px] font-mono font-bold tracking-widest text-[var(--color-text-muted)] uppercase">
-                  Aktif Dava Dosyaları
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-mono font-bold text-[var(--color-text-muted)] tracking-widest uppercase">
+                  AKTİF DAVA DOSYALARI
                 </span>
-                <div className="p-2.5 rounded-xl bg-[var(--color-bg-glow)] border border-[var(--color-divider)] text-[#3B82F6] transition-colors">
+                <div className="w-9 h-9 rounded-xl bg-[var(--color-bg-glow)] border border-[var(--color-divider)] flex items-center justify-center text-[15px] text-[#3B82F6] group-hover:scale-105 transition-transform">
                   ⚖️
                 </div>
               </div>
 
-              <div className="flex items-baseline gap-3 mb-4">
-                <span className="text-[44px] font-black text-[var(--color-text)] leading-none font-mono tracking-tight">
-                  {loading ? '...' : stats.casesCount}
+              <div className="flex items-baseline gap-3">
+                <span className="text-[34px] font-black text-[var(--color-text)] font-sans leading-none tracking-tight">
+                  {stats.casesCount}
                 </span>
-                <span className="text-[12px] font-mono font-bold text-[#00E699] bg-[#00E699]/10 px-2.5 py-0.5 rounded border border-[#00E699]/20">
+                <span className="text-[12px] font-mono text-[#00E699] font-bold bg-[#00E699]/10 border border-[#00E699]/20 px-2 py-0.5 rounded-full">
                   Aktif Kayıt
                 </span>
               </div>
 
+              {/* Progress Tracker Line */}
               <div className="w-full bg-[var(--color-bg-glow)] h-1.5 rounded-full overflow-hidden">
-                <div className="bg-[#3B82F6] h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, Math.max(15, stats.casesCount * 5))}%` }} />
+                <div 
+                  className="bg-[#3B82F6] h-full rounded-full transition-all duration-1000"
+                  style={{ width: `${Math.min(stats.casesCount * 10, 100)}%` }}
+                />
               </div>
             </div>
 
-            {/* Card 2: En Yakın Duruşma (100% Dynamic) */}
-            <div
+            {/* Stat Card 2: En Yakın Duruşma Günü */}
+            <div 
               onClick={() => setView('calendar')}
-              className="relative group bg-[var(--color-surface)] border border-[var(--color-divider)] hover:border-[#3B82F6]/60 rounded-2xl p-6 cursor-pointer transition-all duration-300 shadow-sm flex flex-col justify-between overflow-hidden"
+              className="bg-[var(--color-surface)] border border-[var(--color-divider)] rounded-2xl p-5 shadow-sm flex flex-col justify-between gap-4 cursor-pointer hover:border-[#3B82F6]/50 transition-all group"
             >
-              <div className="flex items-start justify-between mb-2">
-                <span className="text-[11px] font-mono font-bold tracking-widest text-[var(--color-text-muted)] uppercase">
-                  En Yakın Duruşma Günü
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-mono font-bold text-[var(--color-text-muted)] tracking-widest uppercase">
+                  EN YAKIN DURUŞMA GÜNÜ
                 </span>
-                <div className="p-2.5 rounded-xl bg-[var(--color-bg-glow)] border border-[var(--color-divider)] text-[#3B82F6] transition-colors">
-                  📅
+                <div className="w-9 h-9 rounded-xl bg-[var(--color-bg-glow)] border border-[var(--color-divider)] flex items-center justify-center text-[15px] text-[#3B82F6] group-hover:scale-105 transition-transform">
+                  🗓️
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-[44px] font-black text-[var(--color-text)] leading-none font-mono tracking-tight">
-                  {loading ? '...' : stats.hearingsCount}
+              <div className="flex items-baseline gap-3">
+                <span className="text-[34px] font-black text-[var(--color-text)] font-sans leading-none tracking-tight">
+                  {stats.hearingsCount}
                 </span>
-                {nextHearing ? (
-                  <span className="text-[11px] font-mono font-bold text-red-400 bg-red-500/15 border border-red-500/30 px-2.5 py-1 rounded-lg">
-                    Duruşma Var
-                  </span>
-                ) : (
-                  <span className="text-[11px] font-mono font-bold text-[#00E699] bg-[#00E699]/10 border border-[#00E699]/20 px-2.5 py-1 rounded-lg">
-                    Takvim Temiz
-                  </span>
-                )}
+                <span className="text-[12px] font-mono text-[#00E699] font-bold bg-[#00E699]/10 border border-[#00E699]/20 px-2 py-0.5 rounded-full">
+                  Takvim Temiz
+                </span>
               </div>
 
               <div className="text-[12px] font-mono text-[var(--color-text-muted)] truncate">
@@ -277,7 +310,7 @@ export function Overview({ setView }: OverviewProps) {
             </div>
           </div>
 
-          {/* Bottom Left Card: Sistem İşlem Günlüğü (100% Dynamic) */}
+          {/* Bottom Left Card: Sistem İşlem Günlüğü (100% Dynamic UYAP Stream) */}
           <div className="bg-[var(--color-surface)] border border-[var(--color-divider)] rounded-2xl p-6 shadow-sm flex flex-col gap-5 flex-1">
             <div className="flex items-center justify-between border-b border-[var(--color-divider)] pb-3">
               <h2 className="text-[18px] font-extrabold text-[var(--color-text)] tracking-tight">
@@ -291,8 +324,14 @@ export function Overview({ setView }: OverviewProps) {
                 İşlem günlüğü yükleniyor...
               </div>
             ) : systemLogs.length === 0 ? (
-              <div className="py-12 text-center font-mono text-[13px] text-[var(--color-text-muted)]">
-                Henüz sistem işlem kaydı bulunmuyor. Dosya yüklediğinizde veya duruşma eklediğinizde işlemleriniz burada listelenecektir.
+              <div className="py-12 text-center font-mono text-[13px] text-[var(--color-text-muted)] flex flex-col items-center justify-center gap-2">
+                <div className="w-10 h-10 rounded-xl bg-[var(--color-bg-glow)] border border-[var(--color-divider)] flex items-center justify-center text-lg text-[#3B82F6] mb-1">
+                  ⚡
+                </div>
+                <div className="font-bold text-[13.5px] text-[var(--color-text)]">UYAP Bildirim Akışı Bekleniyor</div>
+                <p className="text-[11.5px] opacity-75 max-w-sm leading-relaxed">
+                  UYAP eklentinizden dosya hareketleri, tebligatlar ve mahkeme bildirimleri aktarıldığında canlı akış burada listelenecektir.
+                </p>
               </div>
             ) : (
               <div className="flex flex-col gap-3">
@@ -306,11 +345,18 @@ export function Overview({ setView }: OverviewProps) {
                       {log.icon}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <h4 className="text-[14px] font-bold text-[var(--color-text)] truncate">
-                          {log.title}
-                        </h4>
-                        <span className="text-[11px] font-mono text-[var(--color-text-muted)] shrink-0 ml-2">{log.timeStr}</span>
+                      <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
+                        <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                          <h4 className="text-[14px] font-bold text-[var(--color-text)] truncate">
+                            {log.title}
+                          </h4>
+                          {log.badge && (
+                            <span className={`text-[10.5px] font-mono font-bold px-2 py-0.5 rounded-md border shrink-0 ${log.badgeColor || 'bg-blue-500/15 text-blue-400 border-blue-500/30'}`}>
+                              {log.badge}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[11px] font-mono text-[var(--color-text-muted)] shrink-0">{log.timeStr}</span>
                       </div>
                       <p className="text-[12.5px] text-[var(--color-text-muted)] leading-relaxed truncate">
                         {log.description}

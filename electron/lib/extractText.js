@@ -71,6 +71,12 @@ function tiffBufferToPngPages(buffer) {
   }
   if (!ifds || ifds.length === 0) return [];
   
+  const createCanvas = getCreateCanvas();
+  if (!createCanvas) {
+    console.warn('[extractText] Canvas modülü (@napi-rs/canvas) bulunamadı, TIFF render atlanıyor.');
+    return [];
+  }
+
   const pages = [];
   for (const page of ifds) {
     try {

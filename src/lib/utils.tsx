@@ -825,11 +825,44 @@ export function detectReasonedVerdictDoc(documents: any[]): {
     verdictOutcome = 'Yetkisizlik Kararı';
   } else if (normText.includes('beraat') || normText.includes('beraatine')) {
     verdictOutcome = 'Beraat Kararı';
-  } else if (normText.includes('mahkumiyet') || normText.includes('mahkumiyetine') || normText.includes('cezalandirilmasina') || normText.includes('hapis')) {
+  } else if (normText.includes('mahkumiyet') || normText.includes('mahkumiyetine') || normText.includes('cezalandirilmasina') || normText.includes('hapis') || normText.includes('adli para')) {
     verdictOutcome = 'Mahkûmiyet Kararı';
-    const matchPenalty = /(?:ceza|hapis|cezalandirilmasina)[^.\n]*?(\d+\s*(?:yil|ay|gun)[^.\n]*)/i.exec(normText);
-    if (matchPenalty) {
-      sentenceDetail = matchPenalty[1].trim();
+
+    // 1. HÜKÜM fıkrasını ayıkla (gerçek ceza gerekçede değil, HÜKÜM kısmındadır)
+    let searchScope = rawText;
+    const hukumIndex = rawText.search(/(?:H\s*Ü\s*K\s*Ü\s*M\s*:|GEREĞİ\s*DÜŞÜNÜLDÜ\s*:)/i);
+    if (hukumIndex !== -1) {
+      searchScope = rawText.slice(hukumIndex);
+    }
+    const normScope = normalizeTr(searchScope);
+
+    // 2. Öncelik: "neticeten", "netice olarak", "sonuç olarak", "indirile(rek) ... hapis/adli para"
+    const neticetenMatch = /(?:neticeten|netice\s*olarak|sonuc\s*olarak|sonucunda|neticede|indirim\s*yapilarak|oraninda\s*indirile(?:rek)?)[^.\n;]*?(\d+\s*(?:yıl|yil|ay|gün|gun)[^.\n;]*?(?:hapis|adli\s*para|ceza)[^.\n;]*)/i.exec(normScope);
+
+    if (neticetenMatch) {
+      sentenceDetail = neticetenMatch[1].trim();
+    } else {
+      // 3. Öncelik: Hüküm fıkrasında geçen tüm ceza ifadelerini topla ve EN SON GEÇENİ (nihai indirimli cezayı) al
+      const allPenalties: string[] = [];
+      const penaltyRegex = /\b(\d+\s*(?:yıl|yil|ay|gün|gun)\s*(?:hapis|adli\s*para\s*cezasi|adli\s*para|ceza)[^.,;\n]*)/gi;
+      let pMatch: RegExpExecArray | null;
+      while ((pMatch = penaltyRegex.exec(normScope)) !== null) {
+        allPenalties.push(pMatch[1].trim());
+      }
+
+      if (allPenalties.length > 0) {
+        sentenceDetail = allPenalties[allPenalties.length - 1];
+      } else {
+        const fallbackMatch = /(?:ceza|hapis|cezalandirilmasina)[^.\n]*?(\d+\s*(?:yil|ay|gun)[^.\n]*)/i.exec(normScope);
+        if (fallbackMatch) {
+          sentenceDetail = fallbackMatch[1].trim();
+        }
+      }
+    }
+
+    // Temizleme
+    if (sentenceDetail) {
+      sentenceDetail = sentenceDetail.replace(/[,;:]+$/, '').trim();
     }
   } else if (normText.includes('dusen') || normText.includes('dusmesine')) {
     verdictOutcome = 'Davanın Düşmesi Kararı';
@@ -854,60 +887,6 @@ export interface LegalBasisItem {
   description: string;
 }
 
-/**
- * Dava dosyasındaki evrak metinlerinden ve dava türünden gerçek hukuki dayanakları (TCK, CMK, HMK, İYUK maddelerini) çıkarır.
- */
-export function extractLegalBases(documents: any[], caseTitle?: string): LegalBasisItem[] {
-  const branch = getCaseCategory(caseTitle || '');
-  const items: LegalBasisItem[] = [];
-
-  const combinedText = (documents || [])
-    .map(d => `${d.name || ''} ${d.filename || ''} ${d.extracted_text || ''} ${d.summary || ''}`)
-    .join(' ');
-
-  const normText = normalizeTr(combinedText);
-  const titleNorm = normalizeTr(caseTitle || '');
-
-  const isCriminal = titleNorm.includes('ceza') || titleNorm.includes('asliye ceza') || titleNorm.includes('agır ceza') || normText.includes('tck') || normText.includes('cmk') || normText.includes('iddianame') || normText.includes('sanik') || normText.includes('supheli');
-  const isAdmin = titleNorm.includes('idare') || titleNorm.includes('vergi') || normText.includes('iyuk') || normText.includes('idari');
-
-  if (isCriminal) {
-    if (normText.includes('86/1') || normText.includes('86/3') || normText.includes('86')) {
-      items.push({ code: 'TCK m. 86/1, 86/3-e', description: 'Kasten yaralama suçu (nitelikli hal: silahla yaralama).' });
-    }
-    if (normText.includes('29/1') || normText.includes('29') || normText.includes('tahrik')) {
-      items.push({ code: 'TCK m. 29/1', description: 'Haksız tahrik nedeniyle ceza indirimi hükümleri.' });
-    }
-    if (normText.includes('53') || normText.includes('hak yoksunlug')) {
-      items.push({ code: 'TCK m. 53', description: 'Belli hakları kullanmaktan yoksun bırakılma (güvenlik tedbirleri).' });
-    }
-    if (normText.includes('63') || normText.includes('mahsup')) {
-      items.push({ code: 'TCK m. 63', description: 'Gözaltı ve tutuklulukta geçen sürelerin cezadan mahsubu.' });
-    }
-    if (normText.includes('106') || normText.includes('tehdit')) {
-      items.push({ code: 'TCK m. 106', description: 'Tehdit suçu ve ceza sorumluluğu unsurları.' });
-    }
-
-    if (items.length === 0) {
-      items.push({ code: 'TCK m. 86 / m. 106', description: 'Suçun kanuni unsurları ve ceza sorumluluğu esasları.' });
-      items.push({ code: 'CMK m. 217/2', description: 'Yüklenen suçun hukuka uygun şekilde elde edilmiş delillerle ispatı.' });
-    }
-    items.push({ code: 'CMK m. 223/2-e', description: 'Şüpheden sanık yararlanır ilkesi gereğince beraat değerlendirmesi.' });
-    items.push({ code: 'Yargıtay CGK 2020/215 K.', description: 'Kesin delil bulunmadan şüpheye dayalı mahkûmiyet kurulamayacağı ilkesi.' });
-  } else if (isAdmin) {
-    items.push({ code: 'İYUK m. 2', description: 'İdari işlemlerin yetki, şekil, sebep, konu ve maksat yönlerinden idari yargı denetimi.' });
-    items.push({ code: 'İYUK m. 27', description: 'Telafisi güç zararların doğması halinde yürütmenin durdurulması kararı verilmesi.' });
-    items.push({ code: 'Danıştay İDDK 2021/112 K.', description: 'Gerekçesiz ve somut belgeye dayanmayan idari işlemlerin iptali.' });
-  } else {
-    // CIVIL (Hukuk)
-    items.push({ code: 'TMK m. 6 / HMK m. 190', description: 'Tarafların iddia ettikleri vakıaları resmi ve somut delillerle ispat yükü.' });
-    items.push({ code: 'HMK m. 119 / m. 121', description: 'Dilekçeler aşaması, delillerin ikamesi ve usul işlemleri.' });
-    items.push({ code: 'Yargıtay HGK 2022/895 K.', description: 'İspat yükü kendisinde olan tarafın iddiasını hukuken geçerli delillerle kanıtlaması.' });
-  }
-
-  return items.slice(0, 4);
-}
-
 export interface MarginNoteResult {
   note: string;
   recommendation: string;
@@ -916,15 +895,24 @@ export interface MarginNoteResult {
 /**
  * Dava dosyasının durumuna göre dinamik AI Dijital Kenar Notu (Taktik Strateji ve Öneri) üretir.
  */
-export function generateDigitalMarginNote(documents: any[], caseTitle?: string): MarginNoteResult {
-  const combinedText = (documents || [])
-    .map(d => `${d.name || ''} ${d.filename || ''} ${d.extracted_text || ''} ${d.summary || ''}`)
-    .join(' ');
+export function generateDigitalMarginNote(documents: any[], caseTitle?: string, summaryText?: string | null): MarginNoteResult {
+  const docsList = documents || [];
+  const hasSummary = Boolean(summaryText && summaryText.trim().length > 15);
+
+  if (docsList.length === 0 && !hasSummary) {
+    return {
+      note: 'Dava dosyasında henüz incelenen evrak veya özet raporu bulunmuyor. Evraklarınızı yükleyip özet oluşturduğunuzda taktik strateji ve kenar notları burada otomatik üretilecektir.',
+      recommendation: 'Dava klasörünü tarayın veya evrak ekleyerek "Özet Oluştur" butonunu çalıştırın.'
+    };
+  }
+
+  const combinedText = [
+    ...(docsList.map(d => `${d.name || ''} ${d.filename || ''} ${d.extracted_text || ''} ${d.summary || ''}`)),
+    summaryText || ''
+  ].join(' ');
+
   const normText = normalizeTr(combinedText);
   const titleNorm = normalizeTr(caseTitle || '');
-
-  const isCriminal = titleNorm.includes('ceza') || titleNorm.includes('asliye ceza') || titleNorm.includes('agir ceza') || normText.includes('tck') || normText.includes('cmk') || normText.includes('iddianame') || normText.includes('sanik') || normText.includes('supheli');
-  const isAdmin = titleNorm.includes('idare') || titleNorm.includes('vergi') || normText.includes('iyuk') || normText.includes('idari');
 
   const verdict = detectReasonedVerdictDoc(documents);
 
@@ -935,10 +923,13 @@ export function generateDigitalMarginNote(documents: any[], caseTitle?: string):
     };
   }
 
+  const isCriminal = titleNorm.includes('ceza') || titleNorm.includes('asliye ceza') || titleNorm.includes('agir ceza') || normText.includes('tck') || normText.includes('cmk') || normText.includes('iddianame') || normText.includes('sanik') || normText.includes('supheli');
+  const isAdmin = titleNorm.includes('idare') || titleNorm.includes('vergi') || normText.includes('iyuk') || normText.includes('idari');
+
   if (isCriminal) {
     if (normText.includes('tahrik') || normText.includes('arbede') || normText.includes('tartisma') || normText.includes('bicak') || normText.includes('yaralama')) {
       return {
-        note: `Taraflar arasındaki tartışma ve arbede kapsamında haksız tahrik dengesi (TCK m. 29) ile taraf beyanlarındaki çelişkiler davanın seyrini belirlemektedir.`,
+        note: `Taraflar arasındaki tartışma ve olay örgüsü kapsamında haksız tahrik dengesi (TCK m. 29) ile taraf beyanlarındaki çelişkiler davanın seyrini belirlemektedir.`,
         recommendation: `Taraf beyanlarındaki çelişkileri vurgulayıp haksız tahrik indirimini (TCK m. 29) ve CMK m. 223/2-e uyarınca beraat talebini öne çıkarın.`
       };
     }

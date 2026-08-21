@@ -30,7 +30,10 @@ export function Settings({ currentUser, theme, toggleTheme, handleSignOut }: { c
   const [driveStatus, setDriveStatus] = useState<{ connected: boolean; google_email?: string } | null>(null);
   const [driveStatusLoading, setDriveStatusLoading] = useState(true);
   const [backupStats, setBackupStats] = useState<{ total_files: number; total_size: number; last_sync_at: string | null } | null>(null);
-  const [queueStatus, setQueueStatus] = useState<{ counts: Record<string, number>; totalFiles: number; totalSyncedSize: number; autoBackupEnabled: boolean } | null>(null);
+  const [queueStatus, setQueueStatus] = useState<{ counts: Record<string, number>; totalFiles: number; totalSyncedSize: number; autoBackupEnabled: boolean; scanIntervalMinutes?: number } | null>(null);
+  const [casesBackupStatus, setCasesBackupStatus] = useState<{ caseTitle: string; fileCount: number; syncedCount: number; lastSyncedAt: number | null }[]>([]);
+  const [showCasesBackupList, setShowCasesBackupList] = useState(false);
+  const [settingScanInterval, setSettingScanInterval] = useState(false);
   const [connectingDrive, setConnectingDrive] = useState(false);
   const [pollingConnection, setPollingConnection] = useState(false);
   const [disconnectingDrive, setDisconnectingDrive] = useState(false);
@@ -150,6 +153,21 @@ export function Settings({ currentUser, theme, toggleTheme, handleSignOut }: { c
     if (status) setQueueStatus(status);
   }, []);
 
+  const loadCasesBackupStatus = useCallback(async () => {
+    const fn = (window as unknown as { electron?: { backupGetAllCasesStatus?: () => Promise<typeof casesBackupStatus> } }).electron?.backupGetAllCasesStatus;
+    if (!fn) return;
+    const list = await fn();
+    if (list) setCasesBackupStatus(list);
+  }, []);
+
+  const handleSetScanInterval = async (minutes: number) => {
+    setSettingScanInterval(true);
+    const fn = (window as unknown as { electron?: { backupSetScanInterval?: (m: number) => Promise<number> } }).electron?.backupSetScanInterval;
+    await fn?.(minutes);
+    setQueueStatus((prev) => prev ? { ...prev, scanIntervalMinutes: minutes } : prev);
+    setSettingScanInterval(false);
+  };
+
   useEffect(() => {
     const fn = (window as unknown as { electron?: { onBackupProgress?: (cb: (s: NonNullable<typeof queueStatus>) => void) => () => void } }).electron?.onBackupProgress;
     const off = fn?.((status) => setQueueStatus(status));
@@ -224,7 +242,7 @@ export function Settings({ currentUser, theme, toggleTheme, handleSignOut }: { c
     setTriggeringBackup(true);
     const fn = (window as unknown as { electron?: { backupTriggerNow?: () => Promise<void> } }).electron?.backupTriggerNow;
     await fn?.();
-    await Promise.all([loadQueueStatus(), loadBackupStats()]);
+    await Promise.all([loadQueueStatus(), loadBackupStats(), loadCasesBackupStatus()]);
     setTriggeringBackup(false);
   };
 
@@ -305,9 +323,9 @@ export function Settings({ currentUser, theme, toggleTheme, handleSignOut }: { c
 
   useEffect(() => {
     (async () => {
-      await Promise.all([loadProfile(), loadSupportHistory(), loadLicenseInfo(), loadDriveStatus(), loadBackupStats(), loadQueueStatus(), loadCrashReportingSetting(), loadAppVersion()]);
+      await Promise.all([loadProfile(), loadSupportHistory(), loadLicenseInfo(), loadDriveStatus(), loadBackupStats(), loadQueueStatus(), loadCasesBackupStatus(), loadCrashReportingSetting(), loadAppVersion()]);
     })();
-  }, [loadProfile, loadSupportHistory, loadLicenseInfo, loadDriveStatus, loadBackupStats, loadQueueStatus, loadCrashReportingSetting, loadAppVersion]);
+  }, [loadProfile, loadSupportHistory, loadLicenseInfo, loadDriveStatus, loadBackupStats, loadQueueStatus, loadCasesBackupStatus, loadCrashReportingSetting, loadAppVersion]);
 
   const handleSaveProfile = async () => {
     setSavingProfile(true);
@@ -692,6 +710,30 @@ export function Settings({ currentUser, theme, toggleTheme, handleSignOut }: { c
                     </div>
                   </div>
 
+                  {/* Tarama Aralığı — "her N dakikada bir tara, değişen varsa yükle" */}
+                  <div className="flex items-center justify-between bg-[#080D1A] border border-[#1E293B] p-4 rounded-xl">
+                    <div>
+                      <div className="text-[13px] font-bold text-white">Yedekleme Tarama Aralığı</div>
+                      <div className="text-[11px] font-mono text-[#64748B] mt-0.5">Bu aralıkla dosyalar taranır, sadece değişenler Drive'a yüklenir.</div>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {[5, 15, 30, 60].map((minutes) => (
+                        <button
+                          key={minutes}
+                          onClick={() => handleSetScanInterval(minutes)}
+                          disabled={settingScanInterval}
+                          className={`px-3 py-1.5 rounded-lg font-mono text-[11px] font-bold border transition-all cursor-pointer disabled:opacity-50 ${
+                            (queueStatus?.scanIntervalMinutes ?? 5) === minutes
+                              ? 'bg-[#3B82F6]/20 border-[#3B82F6]/40 text-[#60A5FA]'
+                              : 'bg-[#151C2C] border-[#1E293B] text-[#64748B]'
+                          }`}
+                        >
+                          {minutes < 60 ? `${minutes} dk` : '1 saat'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Backup Stats */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-[13px] font-mono">
                     <div className="bg-[#080D1A] border border-[#1E293B] p-3.5 rounded-xl">
@@ -709,6 +751,34 @@ export function Settings({ currentUser, theme, toggleTheme, handleSignOut }: { c
                   </div>
 
                   {driveError && <div className="text-[12px] font-mono text-red-400 bg-red-500/10 border border-red-500/20 p-2.5 rounded-xl">{driveError}</div>}
+
+                  {/* Yedeklenen Dosyalar — dava bazında hangi klasörlerin yedeklendiği */}
+                  <div className="bg-[#080D1A] border border-[#1E293B] rounded-xl overflow-hidden">
+                    <button
+                      onClick={() => setShowCasesBackupList((v) => !v)}
+                      className="w-full flex items-center justify-between p-3.5 cursor-pointer"
+                    >
+                      <span className="text-[13px] font-bold text-white">Yedeklenen Dosyalar ({casesBackupStatus.length} dava)</span>
+                      <span className="text-[#64748B] text-[12px] font-mono">{showCasesBackupList ? '▲ Gizle' : '▼ Göster'}</span>
+                    </button>
+                    {showCasesBackupList && (
+                      <div className="border-t border-[#1E293B] max-h-64 overflow-y-auto">
+                        {casesBackupStatus.length === 0 ? (
+                          <div className="p-3.5 text-[12px] font-mono text-[#64748B]">Henüz yedeklenen dosya yok.</div>
+                        ) : (
+                          casesBackupStatus.map((c) => (
+                            <div key={c.caseTitle} className="flex items-center justify-between px-3.5 py-2.5 border-b border-[#1E293B] last:border-b-0">
+                              <div className="text-[12px] font-mono text-white truncate pr-3">{c.caseTitle}</div>
+                              <div className="flex items-center gap-3 shrink-0 text-[11px] font-mono text-[#8C9BB4]">
+                                <span>{c.syncedCount}/{c.fileCount} dosya</span>
+                                <span>{c.lastSyncedAt ? new Date(c.lastSyncedAt).toLocaleDateString('tr-TR') : '—'}</span>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
 
                   {/* Actions */}
                   <div className="flex items-center gap-3 flex-wrap pt-2">

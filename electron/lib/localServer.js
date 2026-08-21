@@ -8,6 +8,8 @@ const { generateUdf, cloneUdfTemplate } = require('./generateUdf');
 const importQueue = require('./importQueue');
 const backupQueue = require('./backupQueue');
 const restoreQueue = require('./restoreQueue');
+const masterIndexSync = require('./masterIndexSync');
+const localDataStore = require('./localDataStore');
 
 const PORT = 4756;
 const BACKEND_URL = (process.env.NEXT_PUBLIC_API_URL || 'https://apexapi.ayris.tech/api/').replace(/\/+$/, '');
@@ -161,12 +163,94 @@ async function handleExportUdf(req, res) {
   }
 }
 
+async function handleHearingsSync(req, res) {
+  let payload;
+  try {
+    payload = await readJsonBody(req);
+  } catch (e) {
+    return sendJson(res, 400, { ok: false, error: 'Geçersiz istek gövdesi.' });
+  }
+
+  const { hearings, syncedAt } = payload || {};
+  if (!Array.isArray(hearings)) {
+    return sendJson(res, 400, { ok: false, error: 'hearings dizisi zorunludur.' });
+  }
+
+  console.log(`[localServer] ${hearings.length} duruşma alındı (${syncedAt || ''})`);
+
+  const token = getAuthToken();
+  if (token && hearings.length > 0) {
+    try {
+      await fetch(`${BACKEND_URL}/hearings/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ hearings }),
+      }).catch((e) => console.log('[localServer] Backend /hearings/sync isteği iletilemedi:', e.message));
+    } catch (e) {
+      // sessizce yut
+    }
+  }
+
+  return sendJson(res, 200, { ok: true, count: hearings.length });
+}
+
+async function handleNotificationsSync(req, res) {
+  let payload;
+  try {
+    payload = await readJsonBody(req);
+  } catch (e) {
+    return sendJson(res, 400, { ok: false, error: 'Geçersiz istek gövdesi.' });
+  }
+
+  const { notifications, newItems, syncedAt } = payload || {};
+  if (!Array.isArray(notifications)) {
+    return sendJson(res, 400, { ok: false, error: 'notifications dizisi zorunludur.' });
+  }
+
+  console.log(`[localServer] ${notifications.length} bildirim alındı (${(newItems || []).length} yeni)`);
+
+  // 1. Yerel SQLite veri tabanına kaydet
+  try {
+    localDataStore.saveUyapNotifications(notifications);
+  } catch (e) {
+    console.error('[localServer] Yerel bildirim kaydı hatası:', e.message);
+  }
+
+  // 2. Aktif pencerelere anlık olay fırlat
+  try {
+    const { BrowserWindow } = require('electron');
+    const wins = BrowserWindow.getAllWindows();
+    for (const win of wins) {
+      if (!win.isDestroyed()) {
+        win.webContents.send('uyap-notifications-synced', { count: notifications.length, newCount: (newItems || []).length });
+      }
+    }
+  } catch (_) {}
+
+  const token = getAuthToken();
+  if (token && notifications.length > 0) {
+    try {
+      await fetch(`${BACKEND_URL}/notifications/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ notifications, newItems }),
+      }).catch((e) => console.log('[localServer] Backend /notifications/sync isteği iletilemedi:', e.message));
+    } catch (e) {
+      // sessizce yut
+    }
+  }
+
+  return sendJson(res, 200, { ok: true, count: notifications.length, newCount: (newItems || []).length });
+}
+
 function startLocalServer(authTokenGetter) {
   if (server) return server;
   getAuthToken = authTokenGetter || getAuthToken;
   importQueue.init({ getAuthToken: () => getAuthToken(), backendUrl: BACKEND_URL });
   backupQueue.init({ getAuthToken: () => getAuthToken(), backendUrl: BACKEND_URL });
   restoreQueue.init({ getAuthToken: () => getAuthToken(), backendUrl: BACKEND_URL });
+  masterIndexSync.init({ getAuthToken: () => getAuthToken(), backendUrl: BACKEND_URL });
+  localDataStore.init({ getAuthToken: () => getAuthToken(), backendUrl: BACKEND_URL });
 
   server = http.createServer((req, res) => {
     if (req.method === 'OPTIONS') {
@@ -185,6 +269,12 @@ function startLocalServer(authTokenGetter) {
     }
     if (req.method === 'POST' && req.url === '/export-udf') {
       return handleExportUdf(req, res);
+    }
+    if (req.method === 'POST' && req.url === '/hearings-sync') {
+      return handleHearingsSync(req, res);
+    }
+    if (req.method === 'POST' && req.url === '/notifications-sync') {
+      return handleNotificationsSync(req, res);
     }
     sendJson(res, 404, { ok: false, error: 'Bulunamadı' });
   });

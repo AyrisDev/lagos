@@ -11,7 +11,6 @@ const { app } = require('electron');
 const { getDosyalarRoot } = require('./fileStore');
 
 const CONCURRENCY = 2;
-const SCAN_INTERVAL_MS = 5 * 60 * 1000; // PRD §30: "belirli aralıklarla"
 // PRD §17'deki backoff cetveli birebir: 5sn, 15sn, 30sn, 60sn.
 const RETRY_DELAYS_MS = [5000, 15000, 30000, 60000];
 const MAX_ATTEMPTS = RETRY_DELAYS_MS.length + 1;
@@ -51,11 +50,13 @@ function saveManifest() {
   }
 }
 
+const DEFAULT_SCAN_INTERVAL_MINUTES = 5;
+
 function loadSettings() {
   try {
-    return { autoBackupEnabled: true, ...JSON.parse(fs.readFileSync(getSettingsPath(), 'utf8')) };
+    return { autoBackupEnabled: true, scanIntervalMinutes: DEFAULT_SCAN_INTERVAL_MINUTES, ...JSON.parse(fs.readFileSync(getSettingsPath(), 'utf8')) };
   } catch {
-    return { autoBackupEnabled: true };
+    return { autoBackupEnabled: true, scanIntervalMinutes: DEFAULT_SCAN_INTERVAL_MINUTES };
   }
 }
 
@@ -78,16 +79,52 @@ function onProgress(fn) {
   progressListeners.push(fn);
 }
 
-function init({ getAuthToken, backendUrl }) {
-  _getAuthToken = getAuthToken || _getAuthToken;
-  _backendUrl = backendUrl || _backendUrl;
-  loadManifest();
-  setInterval(() => {
+let scanIntervalTimer = null;
+
+// Kullanıcının Ayarlar'dan seçtiği tarama aralığına göre periyodik turu
+// yeniden kurar — "her N dakikada bir tara, SHA-256 değişmişse yükle" semantiği
+// korunur (naif "her saatte tüm dosyayı tekrar yükle" DEĞİL, bkz. scanAndQueue).
+function armScanInterval() {
+  if (scanIntervalTimer) clearInterval(scanIntervalTimer);
+  const minutes = loadSettings().scanIntervalMinutes || DEFAULT_SCAN_INTERVAL_MINUTES;
+  scanIntervalTimer = setInterval(() => {
     const settings = loadSettings();
     if (!settings.autoBackupEnabled) return;
     scanAndQueue();
     processAll().catch((e) => console.error('[BACKUP] Periyodik tur hatası:', e.message));
-  }, SCAN_INTERVAL_MS);
+  }, minutes * 60 * 1000);
+}
+
+function setScanIntervalMinutes(minutes) {
+  const clamped = Math.max(1, Math.min(1440, Number(minutes) || DEFAULT_SCAN_INTERVAL_MINUTES));
+  const settings = loadSettings();
+  settings.scanIntervalMinutes = clamped;
+  saveSettings(settings);
+  armScanInterval();
+  return clamped;
+}
+
+function getAllCasesStatus() {
+  if (!manifestLoaded) loadManifest();
+  const byCase = new Map();
+  for (const entry of Object.values(manifest)) {
+    const caseTitle = entry.caseTitle || 'dosyasiz';
+    if (!byCase.has(caseTitle)) byCase.set(caseTitle, { caseTitle, fileCount: 0, syncedCount: 0, lastSyncedAt: null });
+    const bucket = byCase.get(caseTitle);
+    bucket.fileCount += 1;
+    if (entry.status === 'synced') {
+      bucket.syncedCount += 1;
+      if (!bucket.lastSyncedAt || entry.updatedAt > bucket.lastSyncedAt) bucket.lastSyncedAt = entry.updatedAt;
+    }
+  }
+  return Array.from(byCase.values()).sort((a, b) => (b.lastSyncedAt || 0) - (a.lastSyncedAt || 0));
+}
+
+function init({ getAuthToken, backendUrl }) {
+  _getAuthToken = getAuthToken || _getAuthToken;
+  _backendUrl = backendUrl || _backendUrl;
+  loadManifest();
+  armScanInterval();
 }
 
 function sha256OfFile(absolutePath) {
@@ -255,6 +292,25 @@ async function processOne(relPath, entry) {
   }
 }
 
+// Google Drive bağlı değilse yükleme denemeye gerek yok — her deneme hem
+// deneme hakkını (MAX_ATTEMPTS) boşuna tüketiyor hem de kullanıcıyı
+// "Google Drive bağlantısı bulunamadı" hatalarıyla gereksiz yere uğraştırıyor.
+// Dosyalar 'pending' olarak beklemeye devam eder, Drive bağlanınca bir
+// sonraki processAll() turu otomatik olarak yükler.
+async function isDriveConnected() {
+  const token = _getAuthToken();
+  if (!token) return false;
+  try {
+    const res = await fetch(`${_backendUrl}/google-drive/status`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    return res.ok && data.connected === true;
+  } catch {
+    return false; // ağ hatasında temkinli davran, deneme hakkı harcanmasın
+  }
+}
+
 // importQueue.js'deki processAll() ile aynı "zaten çalışıyorsa bir tur daha
 // talep et" deseni — periyodik tarama, manuel "Şimdi Yedekle" ve retry
 // zamanlayıcıları aynı anda tetiklenirse üst üste binmesinler diye.
@@ -268,6 +324,7 @@ async function processAll() {
     do {
       rerunRequested = false;
       if (!_getAuthToken()) break;
+      if (!(await isDriveConnected())) break;
       if (!manifestLoaded) loadManifest();
       const todo = Object.entries(manifest).filter(([, v]) => v.status === 'pending');
       if (todo.length === 0) break;
@@ -323,7 +380,8 @@ function getStatus() {
     counts[e.status] = (counts[e.status] || 0) + 1;
     if (e.status === 'synced') totalSyncedSize += e.size || 0;
   }
-  return { counts, totalFiles: entries.length, totalSyncedSize, autoBackupEnabled: loadSettings().autoBackupEnabled };
+  const settings = loadSettings();
+  return { counts, totalFiles: entries.length, totalSyncedSize, autoBackupEnabled: settings.autoBackupEnabled, scanIntervalMinutes: settings.scanIntervalMinutes };
 }
 
 function getEntriesForCase(caseTitle) {
@@ -351,4 +409,6 @@ module.exports = {
   getEntriesForCase,
   onProgress,
   setAutoBackupEnabled,
+  setScanIntervalMinutes,
+  getAllCasesStatus,
 };

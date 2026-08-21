@@ -16,12 +16,13 @@ export function CaseCalendar({ caseId }: { caseId: string }) {
         .from('case_events')
         .select('*')
         .eq('case_id', caseId)
-        .order('event_date', { ascending: true });
+        .order('event_date', { ascending: false });
         
       if (active) {
         setLoading(false);
         if (!error && data) {
-          setEvents(data);
+          const sorted = [...data].sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime());
+          setEvents(sorted);
         }
       }
     })();

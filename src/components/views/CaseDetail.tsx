@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { API_URL } from '@/lib/constants';
-import { stripBrackets, renderNarrativeMarkdown, useSupabaseToken, formatBytes, AiLoadingOverlay, retryImportEntry, retryCaseImports, parseDocCategory, parseDocDate, parseDocTimestamp, scanCaseFolder, runImportQueueNow, getElectronImportStatus, normalizeTr, detectLatestHearingDate, detectReasonedVerdictDoc, extractLegalBases, generateDigitalMarginNote, detectPostVerdictProcess, isStatementDocument } from '@/lib/utils';
+import * as localData from '@/lib/localData';
+import { stripBrackets, renderNarrativeMarkdown, useSupabaseToken, formatBytes, AiLoadingOverlay, retryImportEntry, retryCaseImports, parseDocCategory, parseDocDate, parseDocTimestamp, scanCaseFolder, runImportQueueNow, getElectronImportStatus, normalizeTr, detectLatestHearingDate, detectReasonedVerdictDoc, generateDigitalMarginNote, detectPostVerdictProcess, isStatementDocument, exportDraftAsWord, exportDraftAsPdf, exportDraftAsUdf, type LegalBasisItem } from '@/lib/utils';
 import { CaseSection, CaseRow, DocumentRow, AnalysisRow, PendingImportEntry, DraftRow } from '@/types';
 import { useToast } from '@/components/ToastProvider';
 
@@ -9,6 +10,7 @@ import { CaseChat } from './CaseChat';
 import { CaseCalendar } from './CaseCalendar';
 import { CaseIntern } from './CaseIntern';
 import { CaseSimulator } from './CaseSimulator';
+import { Drafting } from './Drafting';
 
 interface StatementAnalysisResult {
   persons: {
@@ -86,6 +88,9 @@ export function CaseDetail({ caseId, onBack }: { caseId: string; onBack: () => v
   const [smartViewEnabled, setSmartViewEnabled] = useState(true);
   const [section, setSection] = useState<CaseSection>('genel');
   const [drafts, setDrafts] = useState<DraftRow[]>([]);
+  const [isDraftingStudioOpen, setIsDraftingStudioOpen] = useState(false);
+  const [draftingInitialType, setDraftingInitialType] = useState<string>('hmk-dava');
+  const [deletingDraftId, setDeletingDraftId] = useState<string | null>(null);
   const [summarizing, setSummarizing] = useState(false);
   const [summarizeError, setSummarizeError] = useState('');
   const [summaryProgressLogs, setSummaryProgressLogs] = useState<{ id: string; time: string; text: string; icon: string }[]>([]);
@@ -97,6 +102,23 @@ export function CaseDetail({ caseId, onBack }: { caseId: string; onBack: () => v
     else if (type === 'warning') toast.warning(text);
     else toast.info(text);
   }, [toast]);
+
+  const handleDeleteDraft = async (draftId: string) => {
+    try {
+      setDeletingDraftId(draftId);
+      const { error } = await supabase.from('drafts').delete().eq('id', draftId);
+      if (!error) {
+        setDrafts(prev => prev.filter(d => d.id !== draftId));
+        showToast('Dilekçe taslağı silindi.', 'success');
+      } else {
+        showToast('Dilekçe silinemedi.', 'warning');
+      }
+    } catch (err) {
+      console.error('Delete draft error:', err);
+    } finally {
+      setDeletingDraftId(null);
+    }
+  };
 
   // Modal açıldığında sayfa kaymasını engelle ve Escape tuşunu dinle
   useEffect(() => {
@@ -163,12 +185,12 @@ export function CaseDetail({ caseId, onBack }: { caseId: string; onBack: () => v
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { if (!isBackground) setLoading(false); return; }
 
-      const [{ data: cData }, { data: dData }, { data: aData }, { data: drData }] = await Promise.all([
-        supabase.from('cases').select('*').eq('id', caseId).maybeSingle(),
-        supabase.from('documents').select('*').eq('case_id', caseId).order('uploaded_at', { ascending: false }),
-        supabase.from('analyses').select('*').eq('case_id', caseId).order('created_at', { ascending: false }),
-        supabase.from('drafts').select('id, petition_type, content, case_id, created_at').eq('case_id', caseId).order('created_at', { ascending: false }),
-      ]);
+      // "cases" (dosya kimliği/sahiplik) hâlâ Postgres'te — requireAuth'un
+      // sahiplik doğrulaması buna bağlı, ayrıca yerel klasörü bulmak için
+      // başlığa ihtiyaç var. documents/analyses/drafts artık Postgres'te
+      // tutulmuyor — yerel SQLite'tan (Faz 1'de yazılmaya başlanan) okunuyor.
+      const { data: cData } = await supabase.from('cases').select('*').eq('id', caseId).maybeSingle();
+      const { dData, aData, drData } = await localData.getCaseBundle(cData?.title, caseId);
 
       if (cData) {
         setCaseRow(cData as CaseRow);
@@ -417,6 +439,20 @@ export function CaseDetail({ caseId, onBack }: { caseId: string; onBack: () => v
     return 'CIVIL'; // Hukuk Davaları (HMK & TBK & TMK)
   };
 
+  // Faz 1 çift yazma: backend'in döndürdüğü analiz satırını (Postgres'e zaten
+  // kaydedilmiş olan) aynı şekilde yerel SQLite'a da yazar. Electron dışında
+  // (tarayıcı/dev modu) veya IPC henüz hazır değilse sessizce atlanır — bu
+  // sadece bir önbellekleme adımı, backend'in kaydı zaten kalıcı.
+  const saveAnalysisLocally = async (analysis: unknown) => {
+    if (!analysis || !caseRow?.title) return;
+    try {
+      const fn = (window as unknown as { electron?: { localDataSaveAnalysis?: (p: { caseTitle: string; caseId: string; analysis: unknown }) => Promise<unknown> } }).electron?.localDataSaveAnalysis;
+      if (fn) await fn({ caseTitle: caseRow.title, caseId, analysis });
+    } catch (e) {
+      console.warn('[CaseDetail] Analiz yerel SQLite\'a yazılamadı (backend kaydı etkilenmedi):', e);
+    }
+  };
+
   const logAiProgress = (moduleName: string, step: 'start' | 'processing' | 'generating' | 'done' | 'error', details?: any) => {
     const time = new Date().toLocaleTimeString('tr-TR');
     switch (step) {
@@ -471,11 +507,13 @@ export function CaseDetail({ caseId, onBack }: { caseId: string; onBack: () => v
     try {
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
-      const res = await fetch(`${API_URL}cases/${encodeURIComponent(caseId)}/summarize`, { method: 'POST', headers });
+      const docPayload = documents.map(d => ({ filename: getDocName(d), extracted_text: d.extracted_text || d.summary || '', id: d.id }));
+      const res = await fetch(`${API_URL}cases/${encodeURIComponent(caseId)}/summarize`, { method: 'POST', headers, body: JSON.stringify({ documents: docPayload }) });
       const data = await res.json().catch(() => ({}));
       if (res.ok && (data.analysis || data.summary || data.result)) {
         addLog('[AI Dava Özeti] Rapor oluşturuldu ve kaydedildi.', '✅');
         logAiProgress('AI Dava Özeti', 'done', { data });
+        await saveAnalysisLocally(data.analysis);
         await new Promise(r => setTimeout(r, 400));
         await loadCaseData();
         setSummarizing(false);
@@ -699,6 +737,7 @@ ${textSnippets ? `#### 🔍 Belge Metinlerinden Çıkarılan Tespiti:\n${textSni
         const cleanPersons = filterOutPublicProsecutionPersons(persons);
         logAiProgress('AI İfade Avcısı', 'done', { data: cleanPersons });
         setStatementAnalysisResult({ persons: cleanPersons });
+        await saveAnalysisLocally(data.analysis);
         await loadCaseData();
         setAnalyzingStatements(false);
         return;
@@ -809,9 +848,11 @@ ${textSnippets ? `#### 🔍 Belge Metinlerinden Çıkarılan Tespiti:\n${textSni
     try {
       const headers = await getAuthHeaders();
       logAiProgress('AI Röntgen', 'generating');
-      let res = await fetch(`${API_URL}cases/${encodeURIComponent(caseId)}/analyze-deficiencies`, { method: 'POST', headers });
+      const docPayload = documents.map(d => ({ filename: getDocName(d), extracted_text: d.extracted_text || d.summary || '', id: d.id }));
+      const body = JSON.stringify({ documents: docPayload });
+      let res = await fetch(`${API_URL}cases/${encodeURIComponent(caseId)}/analyze-deficiencies`, { method: 'POST', headers, body });
       if (!res.ok) {
-        res = await fetch(`${API_URL}cases/${encodeURIComponent(caseId)}/deficiencies`, { method: 'POST', headers });
+        res = await fetch(`${API_URL}cases/${encodeURIComponent(caseId)}/deficiencies`, { method: 'POST', headers, body });
       }
       const data = await res.json().catch(() => ({}));
       const da = data.analysis?.summary_json?.deficiencyAnalysis || data.summary_json?.deficiencyAnalysis || data.deficiencyAnalysis || data.result || data;
@@ -826,6 +867,7 @@ ${textSnippets ? `#### 🔍 Belge Metinlerinden Çıkarılan Tespiti:\n${textSni
           unknownSteps: da.unknownSteps || [],
           flaggedContent: da.flaggedContent || []
         });
+        await saveAnalysisLocally(data.analysis);
         await loadCaseData();
         setAnalyzingDeficiencies(false);
         return;
@@ -913,16 +955,17 @@ ${textSnippets ? `#### 🔍 Belge Metinlerinden Çıkarılan Tespiti:\n${textSni
     try {
       const headers = await getAuthHeaders();
       logAiProgress('AI Dava Stratejisi', 'generating');
+      const docPayload = documents.map(d => ({ filename: getDocName(d), extracted_text: d.extracted_text || d.summary || '', id: d.id }));
       let res = await fetch(`${API_URL}cases/${encodeURIComponent(caseId)}/analyze-strategy`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ clientName: targetClient, client_name: targetClient, clientRole, client_role: clientRole })
+        body: JSON.stringify({ clientName: targetClient, client_name: targetClient, clientRole, client_role: clientRole, documents: docPayload })
       });
       if (!res.ok) {
         res = await fetch(`${API_URL}cases/${encodeURIComponent(caseId)}/strategy`, {
           method: 'POST',
           headers,
-          body: JSON.stringify({ clientName: targetClient, client_name: targetClient, clientRole, client_role: clientRole })
+          body: JSON.stringify({ clientName: targetClient, client_name: targetClient, clientRole, client_role: clientRole, documents: docPayload })
         });
       }
       const data = await res.json().catch(() => ({}));
@@ -939,6 +982,7 @@ ${textSnippets ? `#### 🔍 Belge Metinlerinden Çıkarılan Tespiti:\n${textSni
             confidenceNotes: stra.confidenceNotes || []
           }
         });
+        await saveAnalysisLocally(data.analysis);
         await loadCaseData();
         setAnalyzingStrategy(false);
         return;
@@ -1022,16 +1066,17 @@ ${textSnippets ? `#### 🔍 Belge Metinlerinden Çıkarılan Tespiti:\n${textSni
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
       logAiProgress('AI Müzakere', 'generating');
+      const docPayload = documents.map(d => ({ filename: getDocName(d), extracted_text: d.extracted_text || d.summary || '', id: d.id }));
       let res = await fetch(`${API_URL}cases/${encodeURIComponent(caseId)}/analyze-mediation`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ clientName: targetClient, client_name: targetClient })
+        body: JSON.stringify({ clientName: targetClient, client_name: targetClient, documents: docPayload })
       });
       if (!res.ok) {
         res = await fetch(`${API_URL}cases/${encodeURIComponent(caseId)}/mediation`, {
           method: 'POST',
           headers,
-          body: JSON.stringify({ clientName: targetClient, client_name: targetClient })
+          body: JSON.stringify({ clientName: targetClient, client_name: targetClient, documents: docPayload })
         });
       }
       const data = await res.json().catch(() => ({}));
@@ -1050,6 +1095,7 @@ ${textSnippets ? `#### 🔍 Belge Metinlerinden Çıkarılan Tespiti:\n${textSni
             disclaimer: med.disclaimer || 'Bu analiz AI tarafından üretilmiştir; nihai karar avukatın profesyonel değerlendirmesine aittir.'
           }
         });
+        await saveAnalysisLocally(data.analysis);
         await loadCaseData();
         setAnalyzingMediation(false);
         return;
@@ -1227,14 +1273,15 @@ ${textSnippets ? `#### 🔍 Belge Metinlerinden Çıkarılan Tespiti:\n${textSni
                   <button
                     key={item.id}
                     onClick={() => setSection(item.id)}
-                    className={`flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-[12.5px] font-medium transition-all cursor-pointer text-left w-full ${
+                    className={`flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-[12.5px] transition-all cursor-pointer text-left w-full ${
                       isActive
-                        ? 'bg-[var(--color-accent)] text-white font-bold shadow-md shadow-blue-500/20'
-                        : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-bg-glow)]'
+                        ? 'bg-[var(--color-accent)] !text-white font-bold shadow-md shadow-blue-500/20'
+                        : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-bg-glow)] font-medium'
                     }`}
+                    style={isActive ? { color: '#ffffff' } : undefined}
                   >
                     <span className="text-[13px]">{item.icon}</span>
-                    <span className="truncate">{item.label}</span>
+                    <span className={`truncate ${isActive ? '!text-white font-bold' : ''}`}>{item.label}</span>
                   </button>
                 );
               })}
@@ -1360,8 +1407,8 @@ ${textSnippets ? `#### 🔍 Belge Metinlerinden Çıkarılan Tespiti:\n${textSni
               );
             })()}
 
-            {/* Top 3 Stat Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Top Stat Cards (Duruşma Günü & Eksik Evrak) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Stat Card 1: Duruşma Günü */}
               <div className="bg-[#0C1324] border border-[#1E293B] rounded-2xl p-4 shadow-inner flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-[#151C2C] border border-[#1E293B] flex items-center justify-center text-xl shrink-0">
@@ -1393,106 +1440,19 @@ ${textSnippets ? `#### 🔍 Belge Metinlerinden Çıkarılan Tespiti:\n${textSni
                 })()}
               </div>
 
-              {/* Stat Card 2: Eksik Evrak Sayısı */}
-              {(() => {
-                let count = 0;
-                if (deficiencyAnalysisResult) {
-                  count = deficiencyAnalysisResult.deficiencies?.length ?? 0;
-                } else if (pendingImports.length > 0) {
-                  count = pendingImports.length;
-                } else if (documents.length === 0) {
-                  count = 1; // Evrak yüklenmemiş dava dosyası
-                } else {
-                  // Dinamik hızlı tarama (AI analizi henüz çalıştırılmadıysa)
-                  const docNames = documents.map(d => getDocName(d).toLowerCase());
-                  const fullText = documents.map(d => `${getDocName(d)} ${d.extracted_text || ''} ${d.summary || ''}`).join(' ').toLowerCase();
-
-                  const hasTanik = docNames.some(n => n.includes('tanık') || n.includes('ifade') || n.includes('sorgu') || n.includes('savunma')) || fullText.includes('ifade tutanağı') || fullText.includes('sorgu tutanağı');
-                  const hasBilirKisi = docNames.some(n => n.includes('bilirkişi') || n.includes('mütalaa')) || fullText.includes('bilirkişi raporu');
-                  const hasHts = docNames.some(n => n.includes('hts') || n.includes('kamera') || n.includes('kayıt')) || fullText.includes('hts kaydı');
-
-                  if (fullText.includes('tanık') && !hasTanik && !fullText.includes('ifade')) count++;
-                  if (fullText.includes('bilirkişi ara kararı') && !hasBilirKisi) count++;
-                  if (fullText.includes('hts kaydı') && !hasHts) count++;
-                }
-
-                const isZero = count === 0;
-
-                return (
-                  <div className="bg-[#0C1324] border border-[#1E293B] rounded-2xl p-4 shadow-inner flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-xl border flex items-center justify-center text-xl shrink-0 font-bold ${
-                      isZero
-                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                        : 'bg-amber-500/10 border-amber-500/30 text-amber-400'
-                    }`}>
-                      {isZero ? '✓' : '⚠️'}
-                    </div>
-                    <div>
-                      <div className="text-[11px] font-mono font-bold text-[#8C9BB4] uppercase tracking-wider mb-0.5">EKSİK EVRAK SAYISI</div>
-                      <div className="text-[18px] font-extrabold text-white font-mono">
-                        {count} <span className="text-[13px] font-sans text-[#8C9BB4] font-normal">{isZero ? 'eksik yok' : 'adet'}</span>
-                      </div>
-                    </div>
+              {/* Stat Card 2: Toplam Evrak Sayısı */}
+              <div className="bg-[#0C1324] border border-[#1E293B] rounded-2xl p-4 shadow-inner flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-[#151C2C] border border-[#1E293B] flex items-center justify-center text-xl shrink-0">
+                  📂
+                </div>
+                <div>
+                  <div className="text-[11px] font-mono font-bold text-[#8C9BB4] uppercase tracking-wider mb-0.5">TOPLAM BELGE & EVRAK</div>
+                  <div className="text-[18px] font-extrabold text-white font-mono flex items-center gap-1.5">
+                    <span>{documents.length}</span>
+                    <span className="text-[13px] font-sans text-[#8C9BB4] font-normal">adet</span>
                   </div>
-                );
-              })()}
-
-              {/* Stat Card 3: AI Analiz Skoru */}
-              {(() => {
-                let score = 0;
-                let label = 'Evrak Bekleniyor';
-                let color = 'text-gray-400';
-                let border = 'border-gray-600';
-                let bg = 'bg-gray-500/10';
-
-                if (documents.length > 0) {
-                  let totalPoints = 50; // Evrak varlığı taban puanı
-
-                  // 1. Okunabilir metin/özet oranı (Max +25)
-                  const docsWithText = documents.filter(d => (d.extracted_text && d.extracted_text.length > 30) || (d.summary && d.summary.length > 20));
-                  const textRatio = docsWithText.length / documents.length;
-                  totalPoints += Math.round(textRatio * 25);
-
-                  // 2. Tamamlanan AI analizleri (Max +23)
-                  let analysesCount = 0;
-                  if (deficiencyAnalysisResult) analysesCount++;
-                  if (strategyAnalysisResult) analysesCount++;
-                  if (mediationAnalysisResult) analysesCount++;
-
-                  totalPoints += analysesCount * 8;
-
-                  score = Math.min(Math.max(totalPoints, 20), 98);
-
-                  if (score >= 80) {
-                    label = 'Yüksek Güvenilirlik';
-                    color = 'text-[#00E699]';
-                    border = 'border-[#00E699]';
-                    bg = 'bg-[#00E699]/10';
-                  } else if (score >= 50) {
-                    label = 'Orta Güvenilirlik';
-                    color = 'text-amber-400';
-                    border = 'border-amber-500';
-                    bg = 'bg-amber-500/10';
-                  } else {
-                    label = 'Sınırlı Veri';
-                    color = 'text-rose-400';
-                    border = 'border-rose-500';
-                    bg = 'bg-rose-500/10';
-                  }
-                }
-
-                return (
-                  <div className="bg-[#0C1324] border border-[#1E293B] rounded-2xl p-4 shadow-inner flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-full border-2 ${border} ${bg} ${color} flex items-center justify-center font-mono font-bold text-[15px] shrink-0`}>
-                      {score > 0 ? score : '-'}
-                    </div>
-                    <div>
-                      <div className="text-[11px] font-mono font-bold text-[#8C9BB4] uppercase tracking-wider mb-0.5">AI ANALİZ SKORU</div>
-                      <div className={`text-[15px] font-extrabold ${color} leading-tight`}>{label}</div>
-                    </div>
-                  </div>
-                );
-              })()}
+                </div>
+              </div>
             </div>
 
             {/* Two-Column Main Content Layout */}
@@ -1508,26 +1468,42 @@ ${textSnippets ? `#### 🔍 Belge Metinlerinden Çıkarılan Tespiti:\n${textSni
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* Davacı Box */}
-                    <div className="bg-[#080D1A] border border-[#1E293B] rounded-xl p-4 flex flex-col gap-1">
-                      <span className="text-[11px] font-mono font-bold text-[#8C9BB4] uppercase tracking-wider">Davacı</span>
-                      <div className="text-[15px] font-bold text-white leading-snug">
-                        {caseRow.parties?.find(p => (p.rol || '').toLowerCase().includes('davacı'))?.adi || caseRow.parties?.[0]?.adi || 'Kozmos İnşaat A.Ş.'}
-                      </div>
-                      <div className="text-[12px] font-mono text-[#64748B] mt-1">
-                        VKN: {((caseRow.parties?.find(p => (p.rol || '').toLowerCase().includes('davacı')) as any)?.vkn) || '4560981234'}
-                      </div>
-                    </div>
+                    {(() => {
+                      const davaciParty = caseRow.parties?.find(p => (p.rol || '').toLowerCase().includes('davacı')) || (caseRow.parties && caseRow.parties.length > 0 ? caseRow.parties[0] : null);
+                      const davaciVkn = (davaciParty as any)?.vkn;
+                      return (
+                        <div className="bg-[#080D1A] border border-[#1E293B] rounded-xl p-4 flex flex-col gap-1">
+                          <span className="text-[11px] font-mono font-bold text-[#8C9BB4] uppercase tracking-wider">Davacı / Müşteki</span>
+                          <div className="text-[15px] font-bold text-white leading-snug">
+                            {davaciParty?.adi || 'Belirtilmemiş'}
+                          </div>
+                          {davaciVkn && (
+                            <div className="text-[12px] font-mono text-[#64748B] mt-1">
+                              VKN/TCKN: {davaciVkn}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* Davalı Box */}
-                    <div className="bg-[#080D1A] border border-[#1E293B] rounded-xl p-4 flex flex-col gap-1">
-                      <span className="text-[11px] font-mono font-bold text-[#8C9BB4] uppercase tracking-wider">Davalı</span>
-                      <div className="text-[15px] font-bold text-white leading-snug">
-                        {caseRow.parties?.find(p => (p.rol || '').toLowerCase().includes('davalı'))?.adi || caseRow.parties?.[1]?.adi || 'Demirtaş Tedarik Ltd.'}
-                      </div>
-                      <div className="text-[12px] font-mono text-[#64748B] mt-1">
-                        VKN: {((caseRow.parties?.find(p => (p.rol || '').toLowerCase().includes('davalı')) as any)?.vkn) || '9876543210'}
-                      </div>
-                    </div>
+                    {(() => {
+                      const davaliParty = caseRow.parties?.find(p => (p.rol || '').toLowerCase().includes('davalı') || (p.rol || '').toLowerCase().includes('sanık')) || (caseRow.parties && caseRow.parties.length > 1 ? caseRow.parties[1] : null);
+                      const davaliVkn = (davaliParty as any)?.vkn;
+                      return (
+                        <div className="bg-[#080D1A] border border-[#1E293B] rounded-xl p-4 flex flex-col gap-1">
+                          <span className="text-[11px] font-mono font-bold text-[#8C9BB4] uppercase tracking-wider">Davalı / Sanık</span>
+                          <div className="text-[15px] font-bold text-white leading-snug">
+                            {davaliParty?.adi || 'Belirtilmemiş'}
+                          </div>
+                          {davaliVkn && (
+                            <div className="text-[12px] font-mono text-[#64748B] mt-1">
+                              VKN/TCKN: {davaliVkn}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
 
@@ -1617,28 +1593,76 @@ ${textSnippets ? `#### 🔍 Belge Metinlerinden Çıkarılan Tespiti:\n${textSni
                   );
                 })()}
 
-                {/* 3. Hukuki Dayanaklar Card */}
-                <div className="bg-[#0C1324] border border-[#1E293B] rounded-2xl p-5 shadow-inner flex flex-col gap-3">
-                  <div className="flex items-center gap-2 text-white font-bold text-[15px] pb-2 border-b border-[#1E293B]/70">
-                    <span className="text-[#3B82F6]">§</span>
-                    <span>Hukuki Dayanaklar</span>
-                  </div>
+                {/* 3. Hukuki Dayanaklar Card — backend'in "Özet Oluştur" sırasında
+                    gerçekten eşleştirdiği mevzuat (bkz. legislationLookup.ts,
+                    analysis.summary_json.kullanilan_mevzuat). Önceden burada metin
+                    içindeki çıplak sayıları ("141", "352" vb.) arayan bir regex
+                    vardı — dosya/esas numaraları veya tarihlerle tesadüfen eşleşip
+                    tamamen alakasız maddeler (örn. alkollü araç kullanma dosyasında
+                    hırsızlık/boşanma maddeleri) gösteriyordu, kaldırıldı. */}
+                {(() => {
+                  let sj: any = analysis?.summary_json;
+                  if (typeof sj === 'string') {
+                    try { sj = JSON.parse(sj); } catch { sj = null; }
+                  }
+                  const kullanilanMevzuat = Array.isArray(sj?.kullanilan_mevzuat) ? sj.kullanilan_mevzuat : [];
+                  const legalBases: LegalBasisItem[] = kullanilanMevzuat.map((m: any) => ({
+                    code: `${m.kanun || ''} m. ${m.maddeNo || ''}`.trim(),
+                    description: m.baslik || '',
+                  }));
 
-                  <ul className="flex flex-col gap-2.5 text-[13px] text-[var(--color-text-muted)] list-disc list-inside">
-                    {extractLegalBases(documents, caseRow?.title).map((item, idx) => (
-                      <li key={idx}>
-                        <strong className="text-[var(--color-text)] font-mono">{item.code}:</strong> <span className="text-[var(--color-text-muted)] font-medium">{item.description}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                  return (
+                    <div className="bg-[#0C1324] border border-[#1E293B] rounded-2xl p-5 shadow-inner flex flex-col gap-3">
+                      <div className="flex items-center justify-between pb-2 border-b border-[#1E293B]/70">
+                        <div className="flex items-center gap-2 text-white font-bold text-[15px]">
+                          <span className="text-[#3B82F6]">§</span>
+                          <span>Hukuki Dayanaklar</span>
+                        </div>
+                        {legalBases.length > 0 && (
+                          <span className="text-[11px] font-mono text-[#60A5FA] bg-[#1E293B] px-2 py-0.5 rounded font-bold">
+                            {legalBases.length} Madde
+                          </span>
+                        )}
+                      </div>
+
+                      {legalBases.length > 0 ? (
+                        <ul className="flex flex-col gap-2.5 text-[13px] text-[var(--color-text-muted)] list-disc list-inside">
+                          {legalBases.map((item, idx) => (
+                            <li key={idx}>
+                              <strong className="text-[var(--color-text)] font-mono">{item.code}:</strong> <span className="text-[var(--color-text-muted)] font-medium">{item.description}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <div className="bg-[#080D1A] border border-dashed border-[#1E293B] rounded-xl p-5 text-center flex flex-col items-center justify-center gap-2.5 my-1">
+                          <div className="text-xl opacity-60">⚖️</div>
+                          <p className="text-[12px] font-mono text-[#8C9BB4] max-w-[450px]">
+                            {documents.length === 0
+                              ? 'Dosyada henüz evrak bulunmuyor. Evrak yüklendiğinde ve analiz edildiğinde hukuki dayanaklar burada listelenecektir.'
+                              : 'Hukuki dayanakların ve uygulanacak mevzuat maddelerinin tespiti için yukarıdaki "Özet Oluştur" butonunu çalıştırın.'}
+                          </p>
+                          {documents.length > 0 && (
+                            <button
+                              onClick={handleSummarize}
+                              disabled={summarizing}
+                              className="bg-[#3B82F6] hover:bg-[#2563EB] text-white px-4 py-1.5 rounded-xl text-[11px] font-mono font-bold transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                            >
+                              ⚡ Özet Oluştur & Analiz Et
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Right Column (1 Span): Dijital Kenar Notu & Kritik Tarihler */}
               <div className="flex flex-col gap-6">
                 {/* 1. Dijital Kenar Notu Card (Glowing Teal Box) */}
                 {(() => {
-                  const marginInfo = generateDigitalMarginNote(documents, caseRow?.title);
+                  const summaryText = getNarrativeSummaryText(analysis);
+                  const marginInfo = generateDigitalMarginNote(documents, caseRow?.title, summaryText);
                   return (
                     <div className="bg-[#0C1324] border border-[#00E699]/40 rounded-2xl p-5 shadow-lg shadow-[#00E699]/5 relative overflow-hidden flex flex-col gap-4">
                       {/* Microchip icon graphic backdrop */}
@@ -1892,27 +1916,28 @@ ${textSnippets ? `#### 🔍 Belge Metinlerinden Çıkarılan Tespiti:\n${textSni
 
             {!analyzingDeficiencies && deficiencyAnalysisResult ? (
               <div className="flex flex-col gap-4">
-                <div className="bg-[#0C1324] border border-[#1E293B] rounded-2xl p-5 shadow-inner">
-                  <div className="text-[11px] font-mono font-bold text-[#60A5FA] uppercase tracking-wider mb-1">ŞU ANKİ AŞAMA</div>
-                  <div className="text-[16px] font-bold text-white">{deficiencyAnalysisResult.currentStage}</div>
+                <div className="bg-[var(--color-surface)] border border-[var(--color-divider)] rounded-2xl p-5 shadow-sm">
+                  <div className="text-[11px] font-mono font-bold text-[#3B82F6] uppercase tracking-wider mb-1">ŞU ANKİ AŞAMA</div>
+                  <div className="text-[17px] font-bold text-[var(--color-text)] tracking-tight">{deficiencyAnalysisResult.currentStage}</div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {deficiencyAnalysisResult.deficiencies?.length > 0 && (
-                    <div className="bg-[#0C1324] border border-[#1E293B] rounded-2xl p-5 shadow-inner flex flex-col gap-3">
-                      <div className="text-[12px] font-mono font-bold text-[#FB7185] uppercase tracking-wider pb-2 border-b border-[#1E293B]">
-                        ⚠️ EKSİKLİKLER / BEKLENENLER
+                    <div className="bg-[var(--color-surface)] border border-[var(--color-divider)] rounded-2xl p-5 shadow-sm flex flex-col gap-3">
+                      <div className="text-[12px] font-mono font-bold text-amber-500 uppercase tracking-wider pb-2 border-b border-[var(--color-divider)] flex items-center justify-between">
+                        <span>⚠️ EKSİKLİKLER / BEKLENENLER</span>
+                        <span className="text-[10px] bg-amber-500/15 text-amber-500 px-2 py-0.5 rounded-md font-mono">{deficiencyAnalysisResult.deficiencies.length} Adet</span>
                       </div>
                       <div className="flex flex-col gap-2.5">
                         {deficiencyAnalysisResult.deficiencies.map((d, i) => (
-                          <div key={i} className="bg-[#151C2C] border border-[#1E293B] p-3 rounded-xl">
-                            <div className="flex items-center justify-between text-[11px] font-mono font-bold mb-1">
+                          <div key={i} className="bg-[var(--color-bg-base)] border border-[var(--color-divider)] p-3.5 rounded-xl flex flex-col gap-1">
+                            <div className="flex items-center justify-between text-[11px] font-mono font-bold">
                               <span className="text-[#3B82F6]">{d.type}</span>
-                              <span className={`px-2 py-0.5 rounded text-[10px] ${d.urgency === 'high' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${d.urgency === 'high' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}`}>
                                 {d.urgency.toUpperCase()}
                               </span>
                             </div>
-                            <div className="text-[13px] text-[#E2E8F0] leading-snug">{d.description}</div>
+                            <div className="text-[13px] text-[var(--color-text)] leading-relaxed font-sans">{d.description}</div>
                           </div>
                         ))}
                       </div>
@@ -1920,42 +1945,64 @@ ${textSnippets ? `#### 🔍 Belge Metinlerinden Çıkarılan Tespiti:\n${textSni
                   )}
 
                   {deficiencyAnalysisResult.completedSteps?.length > 0 && (
-                    <div className="bg-[#0C1324] border border-[#1E293B] rounded-2xl p-5 shadow-inner flex flex-col gap-3">
-                      <div className="text-[12px] font-mono font-bold text-[#00E699] uppercase tracking-wider pb-2 border-b border-[#1E293B]">
-                        ✅ TAMAMLANAN AŞAMALAR
+                    <div className="bg-[var(--color-surface)] border border-[var(--color-divider)] rounded-2xl p-5 shadow-sm flex flex-col gap-3">
+                      <div className="text-[12px] font-mono font-bold text-[#00E699] uppercase tracking-wider pb-2 border-b border-[var(--color-divider)] flex items-center justify-between">
+                        <span>✅ TAMAMLANAN AŞAMALAR</span>
+                        <span className="text-[10px] bg-[#00E699]/15 text-[#00E699] px-2 py-0.5 rounded-md font-mono">{deficiencyAnalysisResult.completedSteps.length} Adım</span>
                       </div>
-                      <ul className="flex flex-col gap-2 list-disc list-inside text-[13px] text-[#E2E8F0]">
+                      <ul className="flex flex-col gap-2.5">
                         {deficiencyAnalysisResult.completedSteps.map((s, i) => (
-                          <li key={i}>{s}</li>
+                          <li key={i} className="flex items-start gap-2.5 text-[13px] text-[var(--color-text)] leading-relaxed bg-[var(--color-bg-base)] p-2.5 rounded-xl border border-[var(--color-divider)]">
+                            <span className="text-[#00E699] text-sm mt-0.5 shrink-0">✓</span>
+                            <span>{s}</span>
+                          </li>
                         ))}
                       </ul>
                     </div>
                   )}
 
                   {deficiencyAnalysisResult.unknownSteps && deficiencyAnalysisResult.unknownSteps.length > 0 && (
-                    <div className="bg-[#0C1324] border border-[#1E293B] rounded-2xl p-5 shadow-inner flex flex-col gap-3">
-                      <div className="text-[12px] font-mono font-bold text-[#FBBF24] uppercase tracking-wider pb-2 border-b border-[#1E293B]">
-                        ❓ DOSYADAN TESPİT EDİLEMEYEN BELİRSİZ ADIMLAR
+                    <div className="bg-[var(--color-surface)] border border-[var(--color-divider)] rounded-2xl p-5 shadow-sm flex flex-col gap-3 md:col-span-2">
+                      <div className="text-[12px] font-mono font-bold text-amber-500 uppercase tracking-wider pb-2 border-b border-[var(--color-divider)] flex items-center justify-between">
+                        <span>❓ DOSYADAN TESPİT EDİLEMEYEN BELİRSİZ ADIMLAR</span>
+                        <span className="text-[10px] bg-amber-500/15 text-amber-500 px-2 py-0.5 rounded-md font-mono">{deficiencyAnalysisResult.unknownSteps.length} Tespit</span>
                       </div>
-                      <ul className="flex flex-col gap-2 list-disc list-inside text-[13px] text-[#CBD5E1]">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                         {deficiencyAnalysisResult.unknownSteps.map((u, i) => (
-                          <li key={i}>{u}</li>
+                          <div key={i} className="flex items-start gap-2.5 text-[13px] text-[var(--color-text)] leading-relaxed bg-[var(--color-bg-base)] p-3 rounded-xl border border-[var(--color-divider)]">
+                            <span className="text-amber-500 text-sm mt-0.5 shrink-0">•</span>
+                            <span>{u}</span>
+                          </div>
                         ))}
-                      </ul>
+                      </div>
                     </div>
                   )}
                 </div>
 
                 {deficiencyAnalysisResult.flaggedContent && deficiencyAnalysisResult.flaggedContent.length > 0 && (
-                  <div className="bg-[#3F121C]/60 border border-[#F43F5E]/40 rounded-2xl p-4">
-                    <div className="text-[11px] font-mono font-bold text-[#FB7185] uppercase tracking-wider mb-2">
-                      ⚠️ ŞÜPHELİ / DİKKAT GEREKTİREN İFADELER
+                  <div className="bg-[var(--color-surface)] border border-rose-500/30 rounded-2xl p-5 shadow-sm flex flex-col gap-3 relative overflow-hidden">
+                    <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-gradient-to-b from-rose-500 to-amber-500"></div>
+                    <div className="flex items-center justify-between border-b border-[var(--color-divider)] pb-2.5">
+                      <div className="flex items-center gap-2">
+                        <span className="w-7 h-7 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center text-sm font-bold">
+                          ⚠️
+                        </span>
+                        <span className="text-[12.5px] font-mono font-extrabold text-[var(--color-text)] tracking-wide uppercase">
+                          Şüpheli / Dikkat Gerektiren İfadeler
+                        </span>
+                      </div>
+                      <span className="text-[10.5px] font-mono font-bold px-2.5 py-0.5 rounded-md bg-rose-500/10 text-rose-500 border border-rose-500/25">
+                        Kritik İnceleme
+                      </span>
                     </div>
-                    <ul className="list-disc list-inside text-[13px] text-[#FB7185] flex flex-col gap-1">
+                    <div className="flex flex-col gap-2.5">
                       {deficiencyAnalysisResult.flaggedContent.map((fc, i) => (
-                        <li key={i}>{fc}</li>
+                        <div key={i} className="flex items-start gap-3 p-3.5 rounded-xl bg-[var(--color-bg-base)] border border-[var(--color-divider)] shadow-inner">
+                          <span className="text-rose-500 font-bold text-sm mt-0.5 shrink-0">•</span>
+                          <span className="text-[13px] text-[var(--color-text)] leading-relaxed font-sans">{fc}</span>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   </div>
                 )}
               </div>
@@ -2417,7 +2464,6 @@ ${textSnippets ? `#### 🔍 Belge Metinlerinden Çıkarılan Tespiti:\n${textSni
                   <tr className="border-b border-[var(--color-divider)] bg-[var(--color-neutral-100)] text-[11px] font-mono font-bold text-[var(--color-text-muted)] uppercase">
                     <th className="py-3 px-5">BELGE ADI</th>
                     <th className="py-3 px-5">KATEGORİ</th>
-                    <th className="py-3 px-5">BOYUT</th>
                     <th className="py-3 px-5">TARİH</th>
                     <th className="py-3 px-5 text-right">DURUM / İŞLEM</th>
                   </tr>
@@ -2435,7 +2481,6 @@ ${textSnippets ? `#### 🔍 Belge Metinlerinden Çıkarılan Tespiti:\n${textSni
                       <td className="py-3.5 px-5 font-mono text-[12px]">
                         <span className="text-[#8B5CF6] dark:text-[#A78BFA] font-semibold">{parseDocCategory(p.name)}</span>
                       </td>
-                      <td className="py-3.5 px-5 font-mono text-[var(--color-text-muted)]">-</td>
                       <td className="py-3.5 px-5 font-mono text-[var(--color-text-muted)]">{parseDocDate(p.name)}</td>
                       <td className="py-3.5 px-5 text-right">
                         {p.status === 'error' ? (
@@ -2460,7 +2505,7 @@ ${textSnippets ? `#### 🔍 Belge Metinlerinden Çıkarılan Tespiti:\n${textSni
                   {/* Completed Documents */}
                   {sortedFilteredDocs.length === 0 && pendingImports.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-[var(--color-text-muted)] font-mono">Belge bulunamadı.</td>
+                      <td colSpan={4} className="py-8 text-center text-[var(--color-text-muted)] font-mono">Belge bulunamadı.</td>
                     </tr>
                   ) : (
                     sortedFilteredDocs.map(d => {
@@ -2482,7 +2527,6 @@ ${textSnippets ? `#### 🔍 Belge Metinlerinden Çıkarılan Tespiti:\n${textSni
                           <td className="py-3.5 px-5 font-mono text-[12px]">
                             <span className="text-[#2563EB] dark:text-[#60A5FA] font-semibold">{parseDocCategory(d.filename, d.category)}</span>
                           </td>
-                          <td className="py-3.5 px-5 font-mono text-[var(--color-text-muted)]">{formatBytes(d.file_size)}</td>
                           <td className="py-3.5 px-5 font-mono text-[var(--color-text)] font-semibold">{parseDocDate(d.filename, d.uploaded_at)}</td>
                           <td className="py-3.5 px-5 text-right">
                             <button
@@ -2503,27 +2547,166 @@ ${textSnippets ? `#### 🔍 Belge Metinlerinden Çıkarılan Tespiti:\n${textSni
         )}
         {/* SECTION: Dilekçeler */}
         {section === 'dilekceler' && (
-          <div className="flex flex-col gap-5">
-            <h1 className="text-[26px] font-extrabold text-white tracking-tight leading-none">Taslak Dilekçeler</h1>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {drafts.length === 0 ? (
-                <div className="col-span-2 text-[#64748B] font-mono text-[13px] py-8 text-center bg-[#0C1324] rounded-2xl border border-[#1E293B]">
-                  Henüz oluşturulmuş taslak dilekçe bulunmuyor.
-                </div>
-              ) : (
-                drafts.map(d => (
-                  <div key={d.id} className="bg-[#0C1324] border border-[#1E293B] rounded-2xl p-4 shadow-sm flex flex-col justify-between">
-                    <div>
-                      <span className="font-mono text-[11px] text-[#3B82F6] uppercase font-bold">{d.petition_type}</span>
-                      <h3 className="font-bold text-white text-[15px] mt-1 mb-2">{d.content.slice(0, 80)}...</h3>
+          <div className="flex-1 flex flex-col min-h-0">
+            {isDraftingStudioOpen ? (
+              <div className="flex-1 flex flex-col min-h-0 animate-fadeIn">
+                <Drafting 
+                  initialCaseId={caseId} 
+                  initialPetitionTypeId={draftingInitialType} 
+                  hideCaseSelector={true} 
+                  onBack={() => {
+                    setIsDraftingStudioOpen(false);
+                    loadCaseData(true);
+                  }} 
+                />
+              </div>
+            ) : (
+              <div className="flex flex-col gap-6">
+                {/* Header & New Petition CTA */}
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-[var(--color-surface)] border border-[var(--color-divider)] p-6 rounded-2xl shadow-sm">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xl">✍️</span>
+                      <h2 className="text-[20px] font-extrabold text-[var(--color-text)] tracking-tight">Dilekçeler & Hukuki Metinler</h2>
+                      <span className="bg-[#3B82F6]/15 text-[#3B82F6] border border-[#3B82F6]/30 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold">
+                        {drafts.length} Taslak
+                      </span>
                     </div>
-                    <div className="text-[11px] font-mono text-[#64748B] pt-2 border-t border-[#1E293B]">
-                      {new Date(d.created_at).toLocaleString('tr-TR')}
-                    </div>
+                    <p className="text-[13px] text-[var(--color-text-muted)] max-w-xl leading-relaxed">
+                      Bu dava dosyasına özel oluşturulan dilekçeler, savunma layihaları ve kanun yolu başvuruları.
+                    </p>
                   </div>
-                ))
-              )}
-            </div>
+
+                  <button
+                    onClick={() => {
+                      const isCriminal = normalizeTr(caseRow?.title || '').includes('ceza');
+                      setDraftingInitialType(isCriminal ? 'cmk-istinaf' : 'hmk-dava');
+                      setIsDraftingStudioOpen(true);
+                    }}
+                    className="bg-[#3B82F6] hover:bg-[#2563EB] text-white px-5 py-2.5 rounded-xl font-mono text-[13px] font-bold shadow-lg shadow-blue-500/20 flex items-center gap-2 transition-all cursor-pointer shrink-0"
+                  >
+                    <span>✨ Yeni Dilekçe Oluştur</span>
+                  </button>
+                </div>
+
+                {/* Quick Recommendation Chips */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[11.5px] font-mono text-[var(--color-text-muted)] mr-1">Önerilen Şablonlar:</span>
+                  {(normalizeTr(caseRow?.title || '').includes('ceza') ? [
+                    { id: 'cmk-istinaf', label: '⚖️ İstinaf Başvuru Dilekçesi' },
+                    { id: 'cmk-savunma', label: '🛡️ Esasa İlişkin Savunma' },
+                    { id: 'cmk-sure-tutum', label: '⏳ Süre Tutum Dilekçesi' },
+                    { id: 'cmk-temyiz', label: '📜 Temyiz Başvuru Dilekçesi' }
+                  ] : [
+                    { id: 'hmk-dava', label: '✍️ Dava Dilekçesi' },
+                    { id: 'hmk-cevap', label: '🛡️ Cevap Dilekçesi' },
+                    { id: 'hmk-bilirkisi-itiraz', label: '🔍 Bilirkişi Raporuna İtiraz' },
+                    { id: 'hmk-mazeret', label: '⏳ Mazeret Bildirim Dilekçesi' }
+                  ]).map(tpl => (
+                    <button
+                      key={tpl.id}
+                      onClick={() => {
+                        setDraftingInitialType(tpl.id);
+                        setIsDraftingStudioOpen(true);
+                      }}
+                      className="bg-[var(--color-surface)] hover:bg-[var(--color-bg-glow)] text-[var(--color-text)] hover:text-[#3B82F6] border border-[var(--color-divider)] hover:border-[#3B82F6]/50 px-3 py-1.5 rounded-xl text-[12px] font-medium transition-all cursor-pointer shadow-sm flex items-center gap-1.5"
+                    >
+                      {tpl.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Drafts Grid or Zero State */}
+                {drafts.length === 0 ? (
+                  <div className="bg-[var(--color-surface)] border border-[var(--color-divider)] rounded-2xl p-12 text-center flex flex-col items-center justify-center gap-3">
+                    <div className="w-16 h-16 rounded-2xl bg-[var(--color-bg-glow)] border border-[var(--color-divider)] flex items-center justify-center text-3xl mb-1 shadow-inner text-[#3B82F6]">
+                      ✍️
+                    </div>
+                    <h3 className="text-[16px] font-bold text-[var(--color-text)]">Bu Dosyada Henüz Kayıtlı Dilekçe Yok</h3>
+                    <p className="text-[13px] text-[var(--color-text-muted)] max-w-md leading-relaxed">
+                      Dosyanızdaki evraklar, taraflar ve mahkeme bilgileri yapay zeka tarafından otomatik kullanılarak saniyeler içinde dilekçeniz hazırlanır.
+                    </p>
+                    <button
+                      onClick={() => {
+                        const isCriminal = normalizeTr(caseRow?.title || '').includes('ceza');
+                        setDraftingInitialType(isCriminal ? 'cmk-istinaf' : 'hmk-dava');
+                        setIsDraftingStudioOpen(true);
+                      }}
+                      className="mt-2 bg-[#3B82F6]/15 hover:bg-[#3B82F6] text-[#3B82F6] hover:text-white border border-[#3B82F6]/30 px-5 py-2 rounded-xl text-[12.5px] font-mono font-bold transition-all cursor-pointer"
+                    >
+                      + İlk Dilekçeyi Hazırla
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {drafts.map(d => (
+                      <div 
+                        key={d.id} 
+                        className="bg-[var(--color-surface)] border border-[var(--color-divider)] hover:border-[#3B82F6]/50 rounded-2xl p-5 shadow-sm flex flex-col justify-between transition-all group gap-4"
+                      >
+                        <div>
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <span className="font-mono text-[11px] text-[#3B82F6] bg-[#3B82F6]/10 border border-[#3B82F6]/20 px-2 py-0.5 rounded-md font-bold uppercase truncate max-w-[240px]">
+                              {d.petition_type || 'Dilekçe Taslağı'}
+                            </span>
+                            <span className="text-[11px] font-mono text-[var(--color-text-muted)] shrink-0">
+                              {new Date(d.created_at).toLocaleDateString('tr-TR')}
+                            </span>
+                          </div>
+
+                          <p className="text-[12.5px] text-[var(--color-text-muted)] font-mono line-clamp-3 leading-relaxed bg-[var(--color-bg-base)] p-3 rounded-xl border border-[var(--color-divider)]">
+                            {d.content || '(İçerik bulunmuyor)'}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-3 border-t border-[var(--color-divider)] flex-wrap gap-2">
+                          <button
+                            onClick={() => {
+                              setIsDraftingStudioOpen(true);
+                            }}
+                            className="bg-[#3B82F6]/10 hover:bg-[#3B82F6] text-[#3B82F6] hover:text-white border border-[#3B82F6]/30 px-3 py-1.5 rounded-lg text-[11.5px] font-mono font-bold transition-all cursor-pointer flex items-center gap-1"
+                          >
+                            <span>✏️ Düzenle / İncele</span>
+                          </button>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => exportDraftAsWord(d.content, d.petition_type)}
+                              title="Word Olarak İndir (.docx)"
+                              className="px-2 py-1 bg-[var(--color-bg-base)] hover:bg-[#3B82F6]/20 text-[var(--color-text)] hover:text-[#3B82F6] border border-[var(--color-divider)] rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer"
+                            >
+                              DOCX
+                            </button>
+                            <button
+                              onClick={() => exportDraftAsPdf(d.content, d.petition_type)}
+                              title="PDF Olarak İndir"
+                              className="px-2 py-1 bg-[var(--color-bg-base)] hover:bg-red-500/20 text-[var(--color-text)] hover:text-red-400 border border-[var(--color-divider)] rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer"
+                            >
+                              PDF
+                            </button>
+                            <button
+                              onClick={() => exportDraftAsUdf(d.content, d.petition_type)}
+                              title="UYAP UDF Olarak İndir"
+                              className="px-2 py-1 bg-[var(--color-bg-base)] hover:bg-amber-500/20 text-[var(--color-text)] hover:text-amber-400 border border-[var(--color-divider)] rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer"
+                            >
+                              UDF
+                            </button>
+                            <button
+                              onClick={() => handleDeleteDraft(d.id)}
+                              disabled={deletingDraftId === d.id}
+                              title="Taslağı Sil"
+                              className="px-2 py-1 bg-[var(--color-bg-base)] hover:bg-red-500/20 text-[var(--color-text-muted)] hover:text-red-400 border border-[var(--color-divider)] rounded-lg text-[11px] transition-all cursor-pointer ml-1"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -2531,10 +2714,10 @@ ${textSnippets ? `#### 🔍 Belge Metinlerinden Çıkarılan Tespiti:\n${textSni
         {section === 'calendar' && <CaseCalendar caseId={caseId} />}
 
         {/* SECTION: AyrisLegal'e Sor (CaseChat) */}
-        {section === 'sohbet' && <CaseChat caseId={caseId} />}
+        {section === 'sohbet' && <CaseChat caseId={caseId} caseTitle={caseRow?.title} />}
 
         {/* SECTION: Dijital Stajyer (CaseIntern) */}
-        {section === 'intern' && <CaseIntern caseId={caseId} />}
+        {section === 'intern' && <CaseIntern caseId={caseId} caseTitle={caseRow?.title} />}
 
         {/* SECTION: Simülatör (CaseSimulator) */}
         {section === 'simulator' && <CaseSimulator caseId={caseId} />}

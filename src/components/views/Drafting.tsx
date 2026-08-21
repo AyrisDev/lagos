@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { API_URL } from '@/lib/constants';
+import * as localData from '@/lib/localData';
 import { exportDraftAsWord, exportDraftAsPdf, exportDraftAsUdf } from '@/lib/utils';
 import { CaseOption } from '@/types';
 import {
@@ -28,14 +29,21 @@ interface TemplateOption {
   category?: string;
 }
 
-export function Drafting() {
+interface DraftingProps {
+  initialCaseId?: string;
+  initialPetitionTypeId?: string;
+  hideCaseSelector?: boolean;
+  onBack?: () => void;
+}
+
+export function Drafting({ initialCaseId, initialPetitionTypeId, hideCaseSelector, onBack }: DraftingProps = {}) {
   const [cases, setCases] = useState<CaseOption[]>([]);
   const [casesLoading, setCasesLoading] = useState(true);
-  const [caseId, setCaseId] = useState('');
+  const [caseId, setCaseId] = useState(initialCaseId || '');
   
   // Dilekçe Türleri & Kategorileri State'leri
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [petitionTypeId, setPetitionTypeId] = useState<string>('hmk-dava');
+  const [petitionTypeId, setPetitionTypeId] = useState<string>(initialPetitionTypeId || 'hmk-dava');
   const [showCatalogModal, setShowCatalogModal] = useState<boolean>(false);
   const [catalogSearch, setCatalogSearch] = useState<string>('');
   const [showGuideDetails, setShowGuideDetails] = useState<boolean>(true);
@@ -127,9 +135,10 @@ export function Drafting() {
       const rows = (caseRows as CaseOption[]) || [];
       setCases(rows);
       
-      if (rows.length > 0) {
-        setCaseId(rows[0].id);
-        await loadDrafts(rows[0].id);
+      const targetCaseId = initialCaseId || (rows.length > 0 ? rows[0].id : '');
+      setCaseId(targetCaseId);
+      if (targetCaseId) {
+        await loadDrafts(targetCaseId);
       } else {
         await loadDrafts();
       }
@@ -137,7 +146,7 @@ export function Drafting() {
       setCasesLoading(false);
     })();
     return () => { active = false; };
-  }, [loadDrafts]);
+  }, [initialCaseId, loadDrafts]);
 
   // Dava değiştiğinde ilgili taslakları filtrele
   const handleCaseChange = async (newCaseId: string) => {
@@ -184,6 +193,18 @@ export function Drafting() {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
 
+      // Faz 2 — son analiz artık Postgres'te kalıcı tutulmuyor; yerel
+      // SQLite'tan okuyup isteğe ekliyoruz (yerelde yoksa backend kendi
+      // Postgres yedeğine düşer).
+      let latestAnalysisSummaryJson: unknown;
+      try {
+        const selectedCaseTitle = cases.find(c => c.id === caseId)?.title;
+        const bundle = await localData.getCaseBundle(selectedCaseTitle, caseId);
+        if (bundle.aData.length > 0) latestAnalysisSummaryJson = bundle.aData[0].summary_json;
+      } catch (e) {
+        console.warn('[Drafting] Yerel dava bundle\'ı okunamadı, backend Postgres yedeğine düşecek:', e);
+      }
+
       const res = await fetch(`${API_URL}drafting/generate`, {
         method: 'POST',
         headers: {
@@ -195,6 +216,7 @@ export function Drafting() {
           petition_type: currentPetitionItem.title,
           template_id: templateId || undefined,
           notes: promptContext.enhancedNotes,
+          latest_analysis_summary_json: latestAnalysisSummaryJson,
         }),
       });
 
@@ -209,7 +231,29 @@ export function Drafting() {
 
       setDraftContent(data.draft || '');
       if (data.draftId) setActiveDraftId(data.draftId);
-      
+
+      // Faz 1 çift yazma: backend'in kaydettiği taslağı (Postgres'e zaten
+      // yazılmış) aynı şekilde yerel SQLite'a da yaz. IPC hazır değilse/tarayıcı
+      // modundaysa sessizce atlanır — backend'in kaydı zaten kalıcı.
+      try {
+        const selectedCaseTitle = cases.find(c => c.id === caseId)?.title;
+        const fn = (window as unknown as { electron?: { localDataSaveDraft?: (p: { caseTitle: string; draft: unknown }) => Promise<unknown> } }).electron?.localDataSaveDraft;
+        if (fn && selectedCaseTitle && data.draftId) {
+          await fn({
+            caseTitle: selectedCaseTitle,
+            draft: {
+              id: data.draftId,
+              petition_type: currentPetitionItem.title,
+              content: data.draft || '',
+              template_id: templateId || null,
+              used_legislation: data.usedLegislation || null,
+            },
+          });
+        }
+      } catch (e) {
+        console.warn('[Drafting] Taslak yerel SQLite\'a yazılamadı (backend kaydı etkilenmedi):', e);
+      }
+
       // Taslak listesini güncelle
       await loadDrafts(caseId);
 
@@ -279,6 +323,15 @@ export function Drafting() {
           {/* Header */}
           <div className="flex items-center justify-between border-b border-[var(--color-divider)] pb-3 shrink-0">
             <div className="flex items-center gap-2.5">
+              {onBack && (
+                <button
+                  onClick={onBack}
+                  className="w-8 h-8 rounded-lg bg-[var(--color-bg-base)] border border-[var(--color-divider)] hover:border-[#3B82F6] flex items-center justify-center text-[var(--color-text)] hover:text-[#3B82F6] transition-all cursor-pointer mr-0.5"
+                  title="Dilekçeler Listesine Dön"
+                >
+                  ←
+                </button>
+              )}
               <div className="w-8 h-8 rounded-lg bg-[#3B82F6]/15 border border-[#3B82F6]/30 flex items-center justify-center text-[#3B82F6]">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -304,8 +357,13 @@ export function Drafting() {
             
             {/* 1. Dava Dosyası */}
             <div>
-              <label className="text-[10.5px] font-mono text-[var(--color-text-muted)] uppercase tracking-wider block mb-1">1. Dava Dosyası Seçin</label>
-              {casesLoading ? (
+              <label className="text-[10.5px] font-mono text-[var(--color-text-muted)] uppercase tracking-wider block mb-1">1. Dava Dosyası</label>
+              {hideCaseSelector ? (
+                <div className="w-full bg-[#0C1324] border border-[#3B82F6]/40 rounded-lg px-3 py-2 text-[12.5px] text-[#93C5FD] font-mono truncate flex items-center gap-2 shadow-inner">
+                  <span className="text-[#3B82F6]">⚖️</span>
+                  <span className="truncate font-semibold">{cases.find(c => c.id === caseId)?.title || 'Mevcut Dava Dosyası'}</span>
+                </div>
+              ) : casesLoading ? (
                 <div className="text-[12px] text-[var(--color-text-muted)] font-mono animate-pulse">Dosyalar yükleniyor...</div>
               ) : (
                 <select 

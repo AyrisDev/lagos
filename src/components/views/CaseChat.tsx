@@ -3,8 +3,9 @@ import { supabase } from '@/lib/supabase';
 import { API_URL } from '@/lib/constants';
 import { renderNarrativeMarkdown, useSupabaseToken, ProcessLog, consumeChatStream, uploadAndExtractAttachment } from '@/lib/utils';
 import { PendingAttachment } from '@/types';
+import * as localData from '@/lib/localData';
 
-export function CaseChat({ caseId }: { caseId: string }) {
+export function CaseChat({ caseId, caseTitle }: { caseId: string; caseTitle?: string | null }) {
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; text: string; id?: string }[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -116,15 +117,45 @@ export function CaseChat({ caseId }: { caseId: string }) {
 
       const bodyPayload: Record<string, unknown> = {
         message: fullText,
+        content: fullText,
+        text: fullText,
         case_id: caseId,
+        caseId: caseId,
       };
-      if (pendingDocs.length > 0) bodyPayload.selected_doc_ids = pendingDocs;
+      if (pendingDocs.length > 0) {
+        bodyPayload.selected_doc_ids = pendingDocs;
+        bodyPayload.selectedDocIds = pendingDocs;
+      }
 
-      const res = await fetch(`${API_URL}chat/stream`, {
+      // Faz 2 — belge metni ve son analiz artık Postgres'te kalıcı tutulmuyor;
+      // yerel SQLite'tan (Faz 1'de yazılmaya başlanan) okuyup isteğe ekliyoruz.
+      // Yerelde veri yoksa (tarayıcı modu, henüz senkron olmamış dosya) backend
+      // kendi Postgres yedeğine düşüyor — sessizce atlanır.
+      try {
+        const bundle = await localData.getCaseBundle(caseTitle, caseId);
+        if (bundle.dData.length > 0) {
+          bodyPayload.case_documents = bundle.dData.map(d => ({ id: d.id, filename: d.filename, extracted_text: d.extracted_text }));
+        }
+        if (bundle.aData.length > 0) {
+          bodyPayload.latest_analysis_summary_json = bundle.aData[0].summary_json;
+        }
+      } catch (e) {
+        console.warn('[CaseChat] Yerel dava bundle\'ı okunamadı, backend Postgres yedeğine düşecek:', e);
+      }
+
+      let res = await fetch(`${API_URL}chat/${encodeURIComponent(caseId)}/message`, {
         method: 'POST',
         headers,
         body: JSON.stringify(bodyPayload),
       });
+
+      if (!res.ok) {
+        res = await fetch(`${API_URL}chat/stream`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(bodyPayload),
+        });
+      }
 
       if (isStale()) return;
       if (!res.ok) {

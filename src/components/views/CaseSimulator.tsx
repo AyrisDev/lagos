@@ -69,16 +69,17 @@ export function CaseSimulator({ caseId }: { caseId: string }) {
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
+      const simPayload = { message: text, content: text, text: text, case_id: caseId, caseId: caseId, chat_mode: 'simulator', persona, simulator_persona: persona };
       let res = await fetch(`${API_URL}chat/${encodeURIComponent(caseId)}/message`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ message: text, content: text, case_id: caseId, chat_mode: 'simulator', persona, simulator_persona: persona }),
+        body: JSON.stringify(simPayload),
       });
       if (!res.ok) {
         res = await fetch(`${API_URL}chat/stream`, {
           method: 'POST',
           headers,
-          body: JSON.stringify({ message: text, content: text, case_id: caseId, chat_mode: 'simulator', persona, simulator_persona: persona }),
+          body: JSON.stringify(simPayload),
         });
       }
 

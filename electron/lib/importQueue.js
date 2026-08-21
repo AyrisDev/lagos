@@ -16,6 +16,7 @@ const path = require('path');
 const { app } = require('electron');
 const { extractFromBuffer } = require('./extractText');
 const { sanitizeName, getDosyalarRoot } = require('./fileStore');
+const localDataStore = require('./localDataStore');
 
 // Not: Çok büyük (1000+ evraklık) tek seferlik bir toplu işlemede bir kere SIGSEGV
 // ile çökmüştük; o zaman zaman aşımı/oturum-bekletme gibi başka sorunlar da vardı
@@ -233,11 +234,42 @@ async function processOne(relPath, entry) {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ case_title: entry.caseTitle, filename: `${entry.name}.${entry.ext}`, extracted_text: extractedText }),
     }), 300000, 'Backend kaydı');
+    const responseData = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
       entry.status = 'error';
-      entry.lastError = data.error || `HTTP ${res.status}`;
-    } else if (extractionError || !extractedText.trim()) {
+      entry.lastError = responseData.error || `HTTP ${res.status}`;
+    } else {
+      // Faz 1 çift yazma: backend'in döndürdüğü (Postgres'e zaten yazılmış)
+      // satırları aynı şekilde yerel SQLite'a da yaz. Başarısız olsa bile asıl
+      // import durumunu etkilemez — Postgres zaten güncel, yerel kopya bir
+      // sonraki turda (dosya tekrar işlenirse) yeniden denenebilir.
+      try {
+        if (responseData?.case_id) {
+          localDataStore.upsertCaseMeta({ caseTitle: entry.caseTitle, caseId: responseData.case_id, title: entry.caseTitle });
+        }
+        if (responseData?.document) {
+          localDataStore.saveDocument({
+            caseTitle: entry.caseTitle,
+            caseId: responseData.case_id,
+            document: {
+              id: responseData.document.id,
+              filename: responseData.document.filename,
+              mime_type: responseData.document.mime_type,
+              file_size: responseData.document.file_size,
+              ocr_status: responseData.document.ocr_status,
+              extracted_text: responseData.document.extracted_text,
+              uploaded_at: responseData.document.uploaded_at || responseData.document.created_at,
+            },
+          });
+        }
+        if (responseData?.analysis) {
+          localDataStore.saveAnalysis({ caseTitle: entry.caseTitle, caseId: responseData.case_id, analysis: responseData.analysis });
+        }
+      } catch (dualWriteErr) {
+        console.error(`[importQueue] Yerel SQLite çift yazma başarısız (${relPath}):`, dualWriteErr.message);
+      }
+    }
+    if (res.ok && (extractionError || !extractedText.trim())) {
       // Belge backend'e kaydedildi (görünür durumda) ama OCR/metin çıkarma
       // gerçekte başarısız oldu ya da boş sonuç döndürdü — eskiden bu durum
       // sessizce "done" işaretlenip lastError null'lanıyordu, bu yüzden "Yeniden
@@ -246,7 +278,7 @@ async function processOne(relPath, entry) {
       // başarısız-yeniden-deneme akışına girsin.
       entry.status = 'error';
       entry.lastError = extractionError || 'OCR/metin çıkarma boş sonuç döndürdü.';
-    } else {
+    } else if (res.ok) {
       entry.status = 'done';
       entry.lastError = null;
     }

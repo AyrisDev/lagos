@@ -9,6 +9,7 @@ const updateService = require('./lib/updateService');
 const backupQueue = require('./lib/backupQueue');
 const restoreQueue = require('./lib/restoreQueue');
 const crashReporter = require('./lib/crashReporter');
+const localDataStore = require('./lib/localDataStore');
 const isDev = !app.isPackaged;
 
 // Global hata yakalayıcıları (uncaughtException/unhandledRejection) MÜMKÜN
@@ -249,6 +250,20 @@ ipcMain.handle('backup:cancel', (_event, relativePath) => backupQueue.cancelUplo
 ipcMain.handle('backup:retry', (_event, relativePath) => backupQueue.retryFailed(relativePath));
 ipcMain.handle('backup:set-auto-enabled', (_event, enabled) => backupQueue.setAutoBackupEnabled(enabled));
 ipcMain.handle('backup:get-case-status', (_event, caseTitle) => backupQueue.getEntriesForCase(caseTitle));
+ipcMain.handle('backup:set-scan-interval', (_event, minutes) => backupQueue.setScanIntervalMinutes(minutes));
+ipcMain.handle('backup:get-all-cases-status', () => backupQueue.getAllCasesStatus());
+
+// Yerel dava veritabanı (Faz 1 — bkz. electron/lib/localDataStore.js). Belge/
+// analiz/taslak yazmaları hem Postgres'e (backend) hem buraya (dava başına
+// SQLite) paralel gidiyor; okuma geçişi Faz 2'de.
+ipcMain.handle('localdata:save-document', (_event, payload) => localDataStore.saveDocument(payload));
+ipcMain.handle('localdata:save-analysis', (_event, payload) => localDataStore.saveAnalysis(payload));
+ipcMain.handle('localdata:save-draft', (_event, payload) => localDataStore.saveDraft(payload));
+ipcMain.handle('localdata:touch-case-meta', (_event, payload) => localDataStore.upsertCaseMeta(payload));
+ipcMain.handle('localdata:get-case-bundle', (_event, payload) => localDataStore.getCaseBundle(payload));
+ipcMain.handle('localdata:search-case', (_event, payload) => localDataStore.searchCase(payload));
+ipcMain.handle('localdata:search-master-index', (_event, payload) => localDataStore.searchMasterIndex(payload));
+ipcMain.handle('localdata:get-uyap-notifications', (_event, payload) => localDataStore.getUyapNotifications(payload?.limit || 30));
 
 // Google Drive Restore (Faz 3, bkz. electron/lib/restoreQueue.js).
 ipcMain.handle('restore:list-files', () => restoreQueue.listBackupFiles());

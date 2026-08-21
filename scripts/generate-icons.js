@@ -4,52 +4,59 @@ const path = require('path');
 
 const rootDir = path.join(__dirname, '..');
 const src = path.join(rootDir, 'public/icon.png');
-const appxDir = path.join(rootDir, 'build/appx');
+const appxDirs = [
+  path.join(rootDir, 'build/appx'),
+  path.join(rootDir, 'public/appx')
+];
 
-if (!fs.existsSync(appxDir)) {
-  fs.mkdirSync(appxDir, { recursive: true });
+for (const dir of appxDirs) {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
 }
 
 async function generateAppxIcons() {
   console.log('Generating AppX tile & logo assets...');
 
-  // Square logos
-  await sharp(src).resize(50, 50).toFile(path.join(appxDir, 'StoreLogo.png'));
-  await sharp(src).resize(150, 150).toFile(path.join(appxDir, 'Square150x150Logo.png'));
-  await sharp(src).resize(44, 44).toFile(path.join(appxDir, 'Square44x44Logo.png'));
-  await sharp(src).resize(310, 310).toFile(path.join(appxDir, 'Square310x310Logo.png'));
-  await sharp(src).resize(310, 310).toFile(path.join(appxDir, 'LargeTile.png'));
-  await sharp(src).resize(71, 71).toFile(path.join(appxDir, 'SmallTile.png'));
-  await sharp(src).resize(71, 71).toFile(path.join(appxDir, 'Square71x71Logo.png'));
-  await sharp(src).resize(24, 24).toFile(path.join(appxDir, 'BadgeLogo.png'));
+  for (const appxDir of appxDirs) {
+    // Square logos
+    await sharp(src).resize(50, 50).toFile(path.join(appxDir, 'StoreLogo.png'));
+    await sharp(src).resize(150, 150).toFile(path.join(appxDir, 'Square150x150Logo.png'));
+    await sharp(src).resize(44, 44).toFile(path.join(appxDir, 'Square44x44Logo.png'));
+    await sharp(src).resize(310, 310).toFile(path.join(appxDir, 'Square310x310Logo.png'));
+    await sharp(src).resize(310, 310).toFile(path.join(appxDir, 'LargeTile.png'));
+    await sharp(src).resize(71, 71).toFile(path.join(appxDir, 'SmallTile.png'));
+    await sharp(src).resize(71, 71).toFile(path.join(appxDir, 'Square71x71Logo.png'));
+    await sharp(src).resize(24, 24).toFile(path.join(appxDir, 'BadgeLogo.png'));
 
-  // Wide310x150Logo (310x150)
-  await sharp(src)
-    .resize(130, 130, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
-    .extend({
-      top: 10,
-      bottom: 10,
-      left: 90,
-      right: 90,
-      background: { r: 0, g: 0, b: 0, alpha: 0 }
-    })
-    .resize(310, 150)
-    .toFile(path.join(appxDir, 'Wide310x150Logo.png'));
+    // Wide310x150Logo (310x150)
+    await sharp(src)
+      .resize(130, 130, { fit: 'contain', background: { r: 9, g: 13, b: 22, alpha: 1 } })
+      .extend({
+        top: 10,
+        bottom: 10,
+        left: 90,
+        right: 90,
+        background: { r: 9, g: 13, b: 22, alpha: 1 }
+      })
+      .resize(310, 150)
+      .toFile(path.join(appxDir, 'Wide310x150Logo.png'));
 
-  // SplashScreen (620x300)
-  await sharp(src)
-    .resize(200, 200, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
-    .extend({
-      top: 50,
-      bottom: 50,
-      left: 210,
-      right: 210,
-      background: { r: 0, g: 0, b: 0, alpha: 0 }
-    })
-    .resize(620, 300)
-    .toFile(path.join(appxDir, 'SplashScreen.png'));
+    // SplashScreen (620x300)
+    await sharp(src)
+      .resize(200, 200, { fit: 'contain', background: { r: 9, g: 13, b: 22, alpha: 1 } })
+      .extend({
+        top: 50,
+        bottom: 50,
+        left: 210,
+        right: 210,
+        background: { r: 9, g: 13, b: 22, alpha: 1 }
+      })
+      .resize(620, 300)
+      .toFile(path.join(appxDir, 'SplashScreen.png'));
+  }
 
-  console.log('AppX assets generated in build/appx/');
+  console.log('AppX assets generated in build/appx/ and public/appx/');
 }
 
 async function generateIco() {
@@ -86,7 +93,8 @@ async function generateIco() {
 
   const icoBuf = Buffer.concat([header, ...entries, ...pngBuffers.map(x => x.buf)]);
   fs.writeFileSync(path.join(rootDir, 'build/icon.ico'), icoBuf);
-  console.log('build/icon.ico created successfully.');
+  fs.writeFileSync(path.join(rootDir, 'public/icon.ico'), icoBuf);
+  console.log('icon.ico created successfully in build/ and public/.');
 }
 
 async function main() {

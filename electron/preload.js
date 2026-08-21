@@ -55,10 +55,26 @@ contextBridge.exposeInMainWorld('electron', {
   backupRetry: (relativePath) => ipcRenderer.invoke('backup:retry', relativePath),
   backupSetAutoEnabled: (enabled) => ipcRenderer.invoke('backup:set-auto-enabled', enabled),
   backupGetCaseStatus: (caseTitle) => ipcRenderer.invoke('backup:get-case-status', caseTitle),
+  backupSetScanInterval: (minutes) => ipcRenderer.invoke('backup:set-scan-interval', minutes),
+  backupGetAllCasesStatus: () => ipcRenderer.invoke('backup:get-all-cases-status'),
   onBackupProgress: (callback) => {
     const listener = (_event, data) => callback(data);
     ipcRenderer.on('backup-progress', listener);
     return () => ipcRenderer.removeListener('backup-progress', listener);
+  },
+  // Yerel dava veritabanı (Faz 1 — bkz. electron/lib/localDataStore.js).
+  localDataSaveDocument: (payload) => ipcRenderer.invoke('localdata:save-document', payload),
+  localDataSaveAnalysis: (payload) => ipcRenderer.invoke('localdata:save-analysis', payload),
+  localDataSaveDraft: (payload) => ipcRenderer.invoke('localdata:save-draft', payload),
+  localDataTouchCaseMeta: (payload) => ipcRenderer.invoke('localdata:touch-case-meta', payload),
+  localDataGetCaseBundle: (payload) => ipcRenderer.invoke('localdata:get-case-bundle', payload),
+  localDataSearchCase: (payload) => ipcRenderer.invoke('localdata:search-case', payload),
+  localDataSearchMasterIndex: (payload) => ipcRenderer.invoke('localdata:search-master-index', payload),
+  localDataGetUyapNotifications: (payload) => ipcRenderer.invoke('localdata:get-uyap-notifications', payload),
+  onUyapNotificationsSynced: (callback) => {
+    const listener = (_event, data) => callback(data);
+    ipcRenderer.on('uyap-notifications-synced', listener);
+    return () => ipcRenderer.removeListener('uyap-notifications-synced', listener);
   },
   // Dış URL'yi sistem tarayıcısında açar (örn. ayrislegal.com/pricing).
   openUrl: (url) => ipcRenderer.invoke('open-external-url', url),

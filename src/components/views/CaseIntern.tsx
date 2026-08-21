@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { API_URL } from '@/lib/constants';
 import { renderNarrativeMarkdown, useSupabaseToken, ProcessLog, consumeChatStream } from '@/lib/utils';
+import * as localData from '@/lib/localData';
 
 interface PinpointResult {
   found?: boolean;
@@ -12,7 +13,7 @@ interface PinpointResult {
   confidenceScore?: string;
 }
 
-export function CaseIntern({ caseId }: { caseId: string }) {
+export function CaseIntern({ caseId, caseTitle }: { caseId: string; caseTitle?: string | null }) {
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; text: string; pinpoint?: PinpointResult; id?: string }[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -90,17 +91,30 @@ export function CaseIntern({ caseId }: { caseId: string }) {
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
+      // Faz 2 — belge metni artık Postgres'te kalıcı tutulmuyor; yerel
+      // SQLite'tan okuyup isteğe ekliyoruz (yerelde yoksa backend kendi
+      // Postgres yedeğine düşer, sessizce).
+      let docPayload: { id?: string; filename: string; extracted_text: string | null }[] | undefined;
+      try {
+        const bundle = await localData.getCaseBundle(caseTitle, caseId);
+        if (bundle.dData.length > 0) {
+          docPayload = bundle.dData.map(d => ({ id: d.id, filename: d.filename, extracted_text: d.extracted_text }));
+        }
+      } catch (e) {
+        console.warn('[CaseIntern] Yerel dava bundle\'ı okunamadı, backend Postgres yedeğine düşecek:', e);
+      }
+
       // Öncelikli olarak Dijital Stajyer Canlı Nokta Atışı Servisini Dene (/cases/:id/digital-intern)
       let internRes = await fetch(`${API_URL}cases/${encodeURIComponent(caseId)}/digital-intern`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ question: text, query: text })
+        body: JSON.stringify({ question: text, query: text, documents: docPayload })
       });
       if (!internRes.ok) {
         internRes = await fetch(`${API_URL}cases/${encodeURIComponent(caseId)}/live-qa`, {
           method: 'POST',
           headers,
-          body: JSON.stringify({ question: text, query: text })
+          body: JSON.stringify({ question: text, query: text, documents: docPayload })
         });
       }
 
@@ -119,16 +133,17 @@ export function CaseIntern({ caseId }: { caseId: string }) {
       }
 
       // Fallback: Normal chat stream
+      const fallbackBody = JSON.stringify({ message: text, content: text, text: text, case_id: caseId, caseId: caseId, chat_mode: 'intern', case_documents: docPayload });
       let res = await fetch(`${API_URL}chat/${encodeURIComponent(caseId)}/message`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ message: text, content: text, case_id: caseId, chat_mode: 'intern' }),
+        body: fallbackBody,
       });
       if (!res.ok) {
         res = await fetch(`${API_URL}chat/stream`, {
           method: 'POST',
           headers,
-          body: JSON.stringify({ message: text, content: text, case_id: caseId, chat_mode: 'intern' }),
+          body: fallbackBody,
         });
       }
 
