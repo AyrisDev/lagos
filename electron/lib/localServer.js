@@ -178,6 +178,24 @@ async function handleHearingsSync(req, res) {
 
   console.log(`[localServer] ${hearings.length} duruşma alındı (${syncedAt || ''})`);
 
+  // 1. Yerel SQLite veri tabanına kaydet
+  try {
+    localDataStore.saveUyapHearings(hearings);
+  } catch (e) {
+    console.error('[localServer] Yerel duruşma kaydı hatası:', e.message);
+  }
+
+  // 2. Aktif pencerelere anlık olay fırlat
+  try {
+    const { BrowserWindow } = require('electron');
+    const wins = BrowserWindow.getAllWindows();
+    for (const win of wins) {
+      if (!win.isDestroyed()) {
+        win.webContents.send('uyap-hearings-synced', { count: hearings.length });
+      }
+    }
+  } catch (_) {}
+
   const token = getAuthToken();
   if (token && hearings.length > 0) {
     try {

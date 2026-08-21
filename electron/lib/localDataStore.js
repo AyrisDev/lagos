@@ -390,15 +390,111 @@ function saveUyapNotifications(notifications) {
 
 function getUyapNotifications(limit = 30) {
   const root = getDosyalarRoot();
-  const workingPath = path.join(root, localDb.MASTER_WORKING_FILENAME);
-  if (!fs.existsSync(workingPath)) return [];
   const db = localDb.openMasterIndexDb(root);
   try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS uyap_notifications (
+        id TEXT PRIMARY KEY,
+        bildirim_id INTEGER UNIQUE,
+        mesaj_id INTEGER,
+        baslik TEXT,
+        mesaj TEXT,
+        dosya_no TEXT,
+        birim_adi TEXT,
+        kategori TEXT,
+        gonderilme_tarihi TEXT,
+        okundu_mu INTEGER DEFAULT 0,
+        created_at TEXT NOT NULL
+      );
+    `);
     return db.prepare(`
       SELECT * FROM uyap_notifications ORDER BY gonderilme_tarihi DESC, created_at DESC LIMIT ?
     `).all(limit);
   } catch (e) {
     console.error('[localDataStore] Bildirimler okunamadı:', e.message);
+    return [];
+  }
+}
+
+
+function saveUyapHearings(hearings = []) {
+  if (!Array.isArray(hearings) || hearings.length === 0) return 0;
+  const root = getDosyalarRoot();
+  const db = localDb.openMasterIndexDb(root);
+  const now = new Date().toISOString();
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS uyap_hearings (
+      id TEXT PRIMARY KEY,
+      kayit_id INTEGER UNIQUE,
+      dosya_no TEXT,
+      mahkeme_adi TEXT,
+      dosya_turu TEXT,
+      tarih_saat TEXT NOT NULL,
+      islem_turu TEXT,
+      islem_sonucu TEXT,
+      taraflar_json TEXT,
+      created_at TEXT NOT NULL
+    );
+  `);
+
+  const insertStmt = db.prepare(`
+    INSERT OR REPLACE INTO uyap_hearings (
+      id, kayit_id, dosya_no, mahkeme_adi, dosya_turu, tarih_saat, islem_turu, islem_sonucu, taraflar_json, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const insertMany = db.transaction((items) => {
+    let count = 0;
+    for (const h of items) {
+      const kayitId = h.kayitId || null;
+      const id = String(kayitId || `${h.dosyaNo}_${h.tarihSaat}`);
+      const dosyaNo = h.dosyaNo || '';
+      const mahkemeAdi = h.yerelBirimAd || h.mahkemeAdi || '';
+      const dosyaTuru = h.dosyaTurKodAciklama || h.dosyaTuru || '';
+      
+      let isoDate = h.tarihSaat;
+      try {
+        const d = new Date(h.tarihSaat.replace(' ', 'T'));
+        if (!isNaN(d.getTime())) isoDate = d.toISOString();
+      } catch (_) {}
+
+      const islemTuru = h.islemTuruAciklama || h.islemTuru || 'Duruşma';
+      const islemSonucu = h.islemSonucuAciklama || h.islemSonucu || 'Günü Verildi';
+      const taraflarJson = JSON.stringify(h.dosyaTaraflari || []);
+
+      insertStmt.run(id, kayitId, dosyaNo, mahkemeAdi, dosyaTuru, isoDate, islemTuru, islemSonucu, taraflarJson, now);
+      count++;
+    }
+    return count;
+  });
+
+  const inserted = insertMany(hearings);
+  scheduleMasterSnapshot();
+  return inserted;
+}
+
+function getUyapHearings(limit = 100) {
+  const root = getDosyalarRoot();
+  const db = localDb.openMasterIndexDb(root);
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS uyap_hearings (
+        id TEXT PRIMARY KEY,
+        kayit_id INTEGER UNIQUE,
+        dosya_no TEXT,
+        mahkeme_adi TEXT,
+        dosya_turu TEXT,
+        tarih_saat TEXT NOT NULL,
+        islem_turu TEXT,
+        islem_sonucu TEXT,
+        taraflar_json TEXT,
+        created_at TEXT NOT NULL
+      );
+    `);
+    return db.prepare(`SELECT * FROM uyap_hearings ORDER BY tarih_saat ASC LIMIT ?`).all(limit);
+  } catch (e) {
+    console.error('[localDataStore] Duruşmalar okunamadı:', e.message);
     return [];
   }
 }
@@ -416,4 +512,6 @@ module.exports = {
   getAllCasesFromIndex,
   saveUyapNotifications,
   getUyapNotifications,
+  saveUyapHearings,
+  getUyapHearings,
 };

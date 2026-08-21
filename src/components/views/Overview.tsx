@@ -139,6 +139,36 @@ export function Overview({ setView }: OverviewProps) {
           });
         }
 
+        // UYAP Bildirimlerini Sistem İşlem Günlüğü'ne Ekle
+        if (typeof window !== 'undefined' && (window as any).electron?.localDataGetUyapNotifications) {
+          try {
+            const uyapNotifs = await (window as any).electron.localDataGetUyapNotifications({ limit: 20 });
+            if (Array.isArray(uyapNotifs)) {
+              uyapNotifs.forEach((n: any) => {
+                let icon = '🔔';
+                if (n.kategori === 'BILIRKISI') icon = '📋';
+                else if (n.kategori === 'KARAR') icon = '📜';
+                else if (n.kategori === 'ICRA') icon = '💵';
+                else if (n.kategori === 'TEBLIGAT') icon = '📬';
+                else if (n.kategori === 'DILEKCE') icon = '✍️';
+                else if (n.kategori === 'VEKIL') icon = '⚖️';
+
+                logs.push({
+                  id: `uyap-notif-${n.id}`,
+                  icon: icon,
+                  title: n.baslik || 'UYAP Bildirimi',
+                  description: n.mesaj,
+                  timeStr: formatRelativeTr(n.gonderilme_tarihi || n.created_at),
+                  createdAt: n.gonderilme_tarihi || n.created_at,
+                  viewTarget: 'cases'
+                });
+              });
+            }
+          } catch (_) {}
+        }
+
+        
+
         logs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         setSystemLogs(logs.slice(0, 15));
 
@@ -314,14 +344,14 @@ export function Overview({ setView }: OverviewProps) {
           <div className="bg-[var(--color-surface)] border border-[var(--color-divider)] rounded-2xl p-6 shadow-sm flex flex-col gap-5 flex-1">
             <div className="flex items-center justify-between border-b border-[var(--color-divider)] pb-3">
               <h2 className="text-[18px] font-extrabold text-[var(--color-text)] tracking-tight">
-                Sistem İşlem Günlüğü
+                Bildirimler
               </h2>
               <span className="text-[11px] font-mono text-[#00E699] font-bold">CANLI AKIŞ</span>
             </div>
 
             {loading ? (
               <div className="py-12 text-center font-mono text-[13px] text-[var(--color-text-muted)] animate-pulse">
-                İşlem günlüğü yükleniyor...
+                Bildirimler yükleniyor...
               </div>
             ) : systemLogs.length === 0 ? (
               <div className="py-12 text-center font-mono text-[13px] text-[var(--color-text-muted)] flex flex-col items-center justify-center gap-2">

@@ -71,6 +71,12 @@ contextBridge.exposeInMainWorld('electron', {
   localDataSearchCase: (payload) => ipcRenderer.invoke('localdata:search-case', payload),
   localDataSearchMasterIndex: (payload) => ipcRenderer.invoke('localdata:search-master-index', payload),
   localDataGetUyapNotifications: (payload) => ipcRenderer.invoke('localdata:get-uyap-notifications', payload),
+  localDataGetUyapHearings: (payload) => ipcRenderer.invoke('localdata:get-uyap-hearings', payload),
+  onUyapHearingsSynced: (callback) => {
+    const listener = (_event, data) => callback(data);
+    ipcRenderer.on('uyap-hearings-synced', listener);
+    return () => ipcRenderer.removeListener('uyap-hearings-synced', listener);
+  },
   onUyapNotificationsSynced: (callback) => {
     const listener = (_event, data) => callback(data);
     ipcRenderer.on('uyap-notifications-synced', listener);

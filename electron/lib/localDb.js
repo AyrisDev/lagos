@@ -75,6 +75,33 @@ CREATE TABLE IF NOT EXISTS drafts (
 `;
 
 const MASTER_SCHEMA_SQL = `
+CREATE TABLE IF NOT EXISTS uyap_hearings (
+  id TEXT PRIMARY KEY,
+  kayit_id INTEGER UNIQUE,
+  dosya_no TEXT,
+  mahkeme_adi TEXT,
+  dosya_turu TEXT,
+  tarih_saat TEXT NOT NULL,
+  islem_turu TEXT,
+  islem_sonucu TEXT,
+  taraflar_json TEXT,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS uyap_notifications (
+  id TEXT PRIMARY KEY,
+  bildirim_id INTEGER UNIQUE,
+  mesaj_id INTEGER,
+  baslik TEXT,
+  mesaj TEXT,
+  dosya_no TEXT,
+  birim_adi TEXT,
+  kategori TEXT,
+  gonderilme_tarihi TEXT,
+  okundu_mu INTEGER DEFAULT 0,
+  created_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS cases_index (
   case_id TEXT PRIMARY KEY,
   title TEXT NOT NULL,

@@ -264,6 +264,7 @@ ipcMain.handle('localdata:get-case-bundle', (_event, payload) => localDataStore.
 ipcMain.handle('localdata:search-case', (_event, payload) => localDataStore.searchCase(payload));
 ipcMain.handle('localdata:search-master-index', (_event, payload) => localDataStore.searchMasterIndex(payload));
 ipcMain.handle('localdata:get-uyap-notifications', (_event, payload) => localDataStore.getUyapNotifications(payload?.limit || 30));
+ipcMain.handle('localdata:get-uyap-hearings', (_event, payload) => localDataStore.getUyapHearings(payload?.limit || 100));
 
 // Google Drive Restore (Faz 3, bkz. electron/lib/restoreQueue.js).
 ipcMain.handle('restore:list-files', () => restoreQueue.listBackupFiles());

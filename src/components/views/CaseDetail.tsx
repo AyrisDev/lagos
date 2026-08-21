@@ -1221,13 +1221,29 @@ ${textSnippets ? `#### 🔍 Belge Metinlerinden Çıkarılan Tespiti:\n${textSni
     return true;
   });
 
+  const filteredPendingImports = pendingImports.filter(p => {
+    const q = docQuery.toLowerCase();
+    const cleanName = parseDocCategory(p.name).toLowerCase();
+    return !q || p.name.toLowerCase().includes(q) || cleanName.includes(q);
+  });
+
+  const sortedPendingImports = [...filteredPendingImports].sort((a, b) => {
+    const timeA = parseDocTimestamp(a.name || '', (a as any).date);
+    const timeB = parseDocTimestamp(b.name || '', (b as any).date);
+
+    if (docSortOrder === 'date-desc') return timeB - timeA;
+    if (docSortOrder === 'date-asc') return timeA - timeB;
+    if (docSortOrder === 'name-asc') return parseDocCategory(a.name).localeCompare(parseDocCategory(b.name));
+    return 0;
+  });
+
   const sortedFilteredDocs = [...filteredDocs].sort((a, b) => {
     const timeA = parseDocTimestamp(a.filename || a.name || '', a.uploaded_at);
     const timeB = parseDocTimestamp(b.filename || b.name || '', b.uploaded_at);
 
     if (docSortOrder === 'date-desc') return timeB - timeA;
     if (docSortOrder === 'date-asc') return timeA - timeB;
-    if (docSortOrder === 'name-asc') return (a.filename || a.name || '').localeCompare(b.filename || b.name || '');
+    if (docSortOrder === 'name-asc') return (parseDocCategory(a.filename, a.category) || '').localeCompare(parseDocCategory(b.filename, b.category) || '');
     if (docSortOrder === 'category') return (a.category || '').localeCompare(b.category || '');
     return 0;
   });
@@ -2463,25 +2479,25 @@ ${textSnippets ? `#### 🔍 Belge Metinlerinden Çıkarılan Tespiti:\n${textSni
                 <thead>
                   <tr className="border-b border-[var(--color-divider)] bg-[var(--color-neutral-100)] text-[11px] font-mono font-bold text-[var(--color-text-muted)] uppercase">
                     <th className="py-3 px-5">BELGE ADI</th>
-                    <th className="py-3 px-5">KATEGORİ</th>
+                    <th className="py-3 px-5">GÖNDEREN</th>
                     <th className="py-3 px-5">TARİH</th>
                     <th className="py-3 px-5 text-right">DURUM / İŞLEM</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--color-divider)]/60 text-[13px]">
                   {/* Pending & Error Documents */}
-                  {pendingImports.map((p, idx) => (
+                  {sortedPendingImports.map((p, idx) => (
                     <tr key={`pending-${idx}`} className="bg-[var(--color-neutral-100)] hover:bg-[var(--color-surface-hover)] transition-colors">
                       <td className="py-3.5 px-5 font-bold text-[var(--color-text)] flex items-center gap-2">
                         <span className={p.status === 'error' ? 'text-red-500' : 'animate-pulse'}>
                           {p.status === 'error' ? '⚠️' : '⏳'}
                         </span>
-                        <span className="font-mono text-[var(--color-text)]">{p.name}.{p.ext}</span>
+                        <span className="font-sans font-bold text-[var(--color-text)]">{parseDocCategory(p.name)}</span>
                       </td>
-                      <td className="py-3.5 px-5 font-mono text-[12px]">
-                        <span className="text-[#8B5CF6] dark:text-[#A78BFA] font-semibold">{parseDocCategory(p.name)}</span>
+                      <td className="py-3.5 px-5 font-mono text-[12px] text-[var(--color-text-muted)]">
+                        {(p as any).sender || (p as any).meta?.gonderen || '—'}
                       </td>
-                      <td className="py-3.5 px-5 font-mono text-[var(--color-text-muted)]">{parseDocDate(p.name)}</td>
+                      <td className="py-3.5 px-5 font-mono text-[var(--color-text-muted)]">{parseDocDate(p.name, (p as any).date)}</td>
                       <td className="py-3.5 px-5 text-right">
                         {p.status === 'error' ? (
                           <button
@@ -2503,7 +2519,7 @@ ${textSnippets ? `#### 🔍 Belge Metinlerinden Çıkarılan Tespiti:\n${textSni
                   ))}
 
                   {/* Completed Documents */}
-                  {sortedFilteredDocs.length === 0 && pendingImports.length === 0 ? (
+                  {sortedFilteredDocs.length === 0 && sortedPendingImports.length === 0 ? (
                     <tr>
                       <td colSpan={4} className="py-8 text-center text-[var(--color-text-muted)] font-mono">Belge bulunamadı.</td>
                     </tr>
@@ -2522,10 +2538,10 @@ ${textSnippets ? `#### 🔍 Belge Metinlerinden Çıkarılan Tespiti:\n${textSni
                         >
                           <td className="py-3.5 px-5 font-bold text-[var(--color-text)] group-hover:text-[var(--color-accent)] transition-colors flex items-center gap-2">
                             <span>📄</span>
-                            <span>{d.filename}</span>
+                            <span className="font-sans font-bold">{parseDocCategory(d.filename, d.category || d.title)}</span>
                           </td>
-                          <td className="py-3.5 px-5 font-mono text-[12px]">
-                            <span className="text-[#2563EB] dark:text-[#60A5FA] font-semibold">{parseDocCategory(d.filename, d.category)}</span>
+                          <td className="py-3.5 px-5 font-mono text-[12px] text-[var(--color-text-muted)]">
+                            {(d as any).sender || (d as any).meta?.gonderen || (d as any).metadata?.gonderen || '—'}
                           </td>
                           <td className="py-3.5 px-5 font-mono text-[var(--color-text)] font-semibold">{parseDocDate(d.filename, d.uploaded_at)}</td>
                           <td className="py-3.5 px-5 text-right">

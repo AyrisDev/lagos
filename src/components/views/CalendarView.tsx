@@ -31,12 +31,40 @@ export function CalendarView() {
           .eq('user_id', uid)
           .order('date', { ascending: true });
 
+        let combined: CalendarEventRow[] = [];
         if (!directErr && directEvents) {
-          const list = (directEvents as CalendarEventRow[]).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-          setEvents(list);
-        } else {
-          setEvents([]);
+          combined = [...(directEvents as CalendarEventRow[])];
         }
+
+        // Yerel UYAP Duruşmalarını ekle
+        if (typeof window !== 'undefined' && (window as any).electron?.localDataGetUyapHearings) {
+          try {
+            const uyapHearings = await (window as any).electron.localDataGetUyapHearings({ limit: 100 });
+            if (Array.isArray(uyapHearings)) {
+              uyapHearings.forEach((h: any) => {
+                // Çift kayıt kontrolü (id veya başlık/tarih eşleşmesi)
+                const exists = combined.some(e => e.id === h.id || (e.title.includes(h.dosya_no) && e.date.startsWith(h.tarih_saat.split('T')[0])));
+                if (!exists) {
+                  combined.push({
+                    id: h.id,
+                    user_id: uid,
+                    title: `${h.mahkeme_adi || ''} ${h.dosya_no || ''}`.trim() || 'UYAP Duruşması',
+                    description: `${h.dosya_turu || ''} - ${h.islem_sonucu || h.islem_turu || 'Duruşma'}`,
+                    date: h.tarih_saat,
+                    type: 'hearing',
+                    location: h.mahkeme_adi || null,
+                    created_at: h.created_at || new Date().toISOString()
+                  } as CalendarEventRow);
+                }
+              });
+            }
+          } catch (e) {
+            console.warn('UYAP duruşmaları yüklenemedi:', e);
+          }
+        }
+
+        combined.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        setEvents(combined);
       } catch (err) {
         console.error('Error loading calendar events:', err);
         setEvents([]);
@@ -53,6 +81,14 @@ export function CalendarView() {
       loadEvents(user.id);
     });
   }, [loadEvents]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !(window as any).electron?.onUyapHearingsSynced) return;
+    const unsub = (window as any).electron.onUyapHearingsSynced(() => {
+      if (userId) loadEvents(userId);
+    });
+    return () => unsub?.();
+  }, [userId, loadEvents]);
 
   useEffect(() => {
     if (!modalOpen && !selectedDay) return;
