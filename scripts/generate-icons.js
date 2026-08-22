@@ -1,4 +1,9 @@
-const sharp = require('sharp');
+let sharp;
+try {
+  sharp = require('sharp');
+} catch (e) {
+  console.warn('⚠️ sharp module is not available. Skipping icon generation if icons exist.');
+}
 const fs = require('fs');
 const path = require('path');
 
@@ -16,7 +21,9 @@ for (const dir of appxDirs) {
 }
 
 async function generateAppxIcons() {
+  if (!sharp) return;
   console.log('Generating AppX tile & logo assets...');
+
 
   for (const appxDir of appxDirs) {
     // Square logos
@@ -60,6 +67,7 @@ async function generateAppxIcons() {
 }
 
 async function generateIco() {
+  if (!sharp) return;
   console.log('Generating build/icon.ico...');
   const sizes = [16, 24, 32, 48, 64, 128, 256];
   const pngBuffers = [];
