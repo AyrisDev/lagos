@@ -266,107 +266,21 @@ export function Templates() {
     }
   };
 
-  // Fallback demo templates with rich Turkish legal text templates
-  const demoTemplates = [
-    {
-      id: 'demo-t1',
-      tag: 'PETITION',
-      name: 'Standard Civil Lawsuit Petition Structure',
-      category: 'Petitions',
-      description: 'Dilekçe yazımında genel asgari usul kurallarını barındıran temel dava dilekçesi şablonu.',
-      extracted_text: `NÖBETÇİ ASLİYE HUKUK MAHKEMESİNE
+  // Dynamic categories extracted strictly from uploaded user templates
+  const dynamicCategories = Array.from(
+    new Set(
+      templates
+        .map(t => (t.category || '').trim())
+        .filter(Boolean)
+    )
+  );
 
-DAVACI      : [Davacı Adı Soyadı / Unvanı, T.C. No / VKN]
-VEKİLİ      : [Avukat Adı Soyadı, Adres]
-DAVALI      : [Davalı Adı Soyadı / Unvanı, Adres]
-DAVA KONUSU : Tazminat ve Sözleşmeden Doğan Alacak Talebi.
-
-AÇIKLAMALAR :
-1. Müvekkil ile davalı taraf arasında [Tarih] tarihinde akdedilen sözleşme uyarınca davalı taraf edimlerini ifa etmekle yükümlüdür.
-2. Davalı taraf üzerine düşen borcu süresi içerisinde ve gereği gibi ifa etmemiş, müvekkilin ihtarnameye rağmen taleplerini karşılamamıştır.
-3. İşbu durum nedeniyle müvekkil nezdinde ağır zararlar doğmuştur.
-
-HUKUKİ NEDENLER : HMK, TBK ve ilgili mevzuat hükümleri.
-DELİLLER         : Sözleşme metni, İhtarname kaydı, Banka dekontları, Bilirkişi incelemesi, Tanık anlatımları.
-
-SONUÇ VE İSTEM  : Yukarıda açıklanan nedenlerle; davanın KABULÜ ile tazminat tutarının davalıdan tahsiline karar verilmesini talep ederiz.`,
-      usedCount: '1,240',
-      editedTime: '2d ago',
-      color: 'blue'
-    },
-    {
-      id: 'demo-t2',
-      tag: 'CONTRACT',
-      name: 'Commercial Non-Disclosure Agreement (NDA) v2.1',
-      category: 'Contracts',
-      description: 'Ticari gizlilik ve bilgi güvenliği sözleşmesi standart büro şablonu.',
-      extracted_text: `GİZLİLİK VE BİLGİ GÜVENLİĞİ SÖZLEŞMESİ
-
-TARAFLAR:
-1. [Firma / Taraf A Unvanı, Adresi]
-2. [Firma / Taraf B Unvanı, Adresi]
-
-KONU:
-İşbu sözleşme, taraflar arasında yürütülen ticari görüşmeler ve ortak projeler kapsamında paylaşılan gizli bilgilerin korunması ve üçüncü şahıslara açıklanmaması şartlarını düzenler.
-
-MADDELER:
-1. GİZLİ BİLGİ KAVRAMI: Taraflarca birbirine açıklanan her türlü ticari, teknik, mali, hukuki ve operasyonel bilgi gizli bilgi sayılır.
-2. GİZLİLİK YÜKÜMLÜLÜĞÜ: Taraflar edindikleri bilgileri karşı tarafın yazılı onayı olmaksızın üçüncü şahıslarla paylaşamaz.
-3. CEZAİ ŞART: İşbu yükümlülüğün ihlali halinde ihlal eden taraf [Miktar] tutarında cezai şart ödemeyi kabul eder.
-4. SÜRE: İşbu sözleşme imza tarihinden itibaren yürürlüğe girer ve sözleşmenin sona ermesinden itibaren 5 yıl süreyle geçerliliğini korur.`,
-      usedCount: '856',
-      editedTime: '1w ago',
-      color: 'green'
-    },
-    {
-      id: 'demo-t3',
-      tag: 'NOTICE',
-      name: 'Cease and Desist - IP Infringement',
-      category: 'Notices',
-      description: 'Fikri mülkiyet ihlali ihtarnamesi ve ihlale son verme bildirim metni.',
-      extracted_text: `İHTARNAME
-
-İHTAR EDEN   : [İhtar Eden Adı Soyadı / Unvanı]
-VEKİLİ       : [Avukat Adı Soyadı, Adres]
-MUHATAP      : [Muhatap Adı Soyadı / Unvanı, Adres]
-
-KONU         : Fikri ve Sınai Haklar ihlalinin derhal durdurulması ve tazminat ihtarıdır.
-
-AÇIKLAMALAR  :
-Sayın Muhatap;
-Müvekkile ait tescilli marka ve fikri eser haklarının izinsiz şekilde dijital ve fiziki mecralarda kullanıldığı tespit edilmiştir. 
-İşbu ihtarnamenin tarafınıza tebliğinden itibaren 3 (üç) gün içerisinde haksız tecavüze son vermenizi, aksi takdirde FSKH m. 68 ve TCK hükümleri uyarınca idari, hukuki ve cezai yollara başvurulacağını ihtar ederiz.`,
-      usedCount: '412',
-      editedTime: '3w ago',
-      color: 'purple'
-    },
-    {
-      id: 'demo-t4',
-      tag: 'PETITION',
-      name: 'Appellate Court Submission - Commercial',
-      category: 'Petitions',
-      description: 'İstinaf ve temyiz dilekçeleri için standart gerekçe ve başvuru yapısı.',
-      extracted_text: `BÖLGE ADLİYE MAHKEMESİ İLGİLİ HUKUK DAİRESİNE
-Gönderilmek Üzere
-ASLİYE TİCARET MAHKEMESİ BAŞKANLIĞINA
-
-DOSYA NO    : 2026/[Esas No] E. - 2026/[Karar No] K.
-İSTİNAF EDEN: [Davacı / Davalı Adı Soyadı]
-VEKİLİ      : [Avukat Adı Soyadı]
-
-KONU        : İlk Derece Mahkemesinin hukuka aykırı kararının İSTİNAFEN İNCELENEREK KALDIRILMASI ve davanın kabulüne karar verilmesi talebidir.
-
-GEREKÇELER  :
-1. İlk derece mahkemesince eksik inceleme ve yetersiz bilirkişi raporuna dayanılarak hüküm kurulmuştur.
-2. HMK m. 266 uyarınca çözümü uzmanlığı gerektiren konularda teknik değerlendirme yapılmamıştır.`,
-      usedCount: '0',
-      editedTime: 'Edited just now',
-      color: 'blue',
-      isDashed: true
-    }
+  const categories = [
+    { id: 'All', label: 'Tüm Şablonlar' },
+    ...dynamicCategories.map(cat => ({ id: cat, label: cat }))
   ];
 
-  const PRESET_CATEGORIES = [
+  const PRESET_SUGGESTIONS = [
     'Dilekçeler',
     'Sözleşmeler',
     'Vekaletnameler',
@@ -375,42 +289,19 @@ GEREKÇELER  :
     'Diğer'
   ];
 
-  const categories = [
-    { id: 'All', label: 'Tüm Şablonlar' },
-    ...PRESET_CATEGORIES.map(cat => ({ id: cat, label: cat }))
-  ];
-
   const isCategoryMatch = (templateCategory: string | undefined | null, selectedCategory: string) => {
     if (selectedCategory === 'All') return true;
     if (!templateCategory || !templateCategory.trim()) return selectedCategory === 'Diğer';
-    
-    const tc = templateCategory.toLowerCase().trim();
-    const sc = selectedCategory.toLowerCase().trim();
-    
-    if (tc === sc || tc.includes(sc) || sc.includes(tc)) return true;
-    
-    // Turkish & English equivalences
-    if ((sc.includes('dilekçe') || sc.includes('petition')) && (tc.includes('dilekçe') || tc.includes('petition'))) return true;
-    if ((sc.includes('sözleşme') || sc.includes('contract')) && (tc.includes('sözleşme') || tc.includes('contract'))) return true;
-    if ((sc.includes('vekalet') || sc.includes('power')) && (tc.includes('vekalet') || tc.includes('power'))) return true;
-    if ((sc.includes('ihtar') || sc.includes('notice')) && (tc.includes('ihtar') || tc.includes('notice'))) return true;
-    if ((sc.includes('duruşma') || sc.includes('tutanak')) && (tc.includes('duruşma') || tc.includes('tutanak'))) return true;
-    
-    return false;
+    return templateCategory.toLowerCase().trim() === selectedCategory.toLowerCase().trim();
   };
 
-  const displayTemplates = templates.length > 0 
-    ? templates.filter(t => {
-        const matchesCat = isCategoryMatch(t.category, activeCategory);
-        const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                              (t.description && t.description.toLowerCase().includes(searchTerm.toLowerCase()));
-        return matchesCat && matchesSearch;
-      })
-    : demoTemplates.filter(t => {
-        const matchesCat = isCategoryMatch(t.category, activeCategory);
-        const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase());
-        return matchesCat && matchesSearch;
-      });
+  const displayTemplates = templates.filter(t => {
+    const matchesCat = isCategoryMatch(t.category, activeCategory);
+    const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          (t.description && t.description.toLowerCase().includes(searchTerm.toLowerCase()));
+    return matchesCat && matchesSearch;
+  });
+
 
   return (
     <div className="flex-1 flex flex-col gap-6 p-3 bg-[var(--color-bg-base)] text-[var(--color-text)] cyber-juris font-sans overflow-y-auto min-h-full">
@@ -478,19 +369,37 @@ GEREKÇELER  :
         <div className="py-20 text-center text-[var(--color-text-muted)] font-mono text-[13px] animate-pulse">
           Şablonlar yükleniyor...
         </div>
+      ) : templates.length === 0 ? (
+        <div className="py-24 text-center flex flex-col items-center justify-center gap-4 bg-[var(--color-surface)] border border-dashed border-[var(--color-divider)] rounded-3xl p-8 max-w-xl mx-auto my-8">
+          <div className="w-14 h-14 rounded-2xl bg-[#3B82F6]/10 border border-[#3B82F6]/30 flex items-center justify-center text-[#3B82F6] text-2xl">
+            📄
+          </div>
+          <div>
+            <h3 className="text-[18px] font-bold text-[var(--color-text)] mb-1">Henüz Şablon Eklenmedi</h3>
+            <p className="text-[13px] text-[var(--color-text-muted)] max-w-md">
+              Büronuzun sık kullandığı dilekçe, sözleşme, ihtarname ve vekaletname belgelerini yükleyerek şablon kütüphanenizi oluşturun.
+            </p>
+          </div>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-[#3B82F6] hover:bg-[#2563EB] text-white px-5 py-2.5 rounded-xl font-mono text-[12px] font-bold transition-all shadow-md shadow-[#3B82F6]/20 flex items-center gap-2 cursor-pointer mt-1"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Yeni Şablon Yükle
+          </button>
+        </div>
       ) : displayTemplates.length === 0 ? (
-        <div className="py-20 text-center text-[var(--color-text-muted)] font-mono text-[13px]">
-          Aramanıza uygun şablon bulunamadı.
+        <div className="py-20 text-center text-[var(--color-text-muted)] font-mono text-[13px] bg-[var(--color-surface)] border border-[var(--color-divider)] rounded-2xl p-8">
+          Aramanıza veya seçili kategoriye uygun şablon bulunamadı.
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {displayTemplates.map((t: any) => {
-            const isDemo = typeof t.id === 'string' && t.id.startsWith('demo');
-            const isDashed = t.isDashed;
-            const rawTag = isDemo ? t.tag : (t.category ? t.category.toUpperCase() : 'PETITION');
-            const categoryTag = rawTag || 'PETITION';
-            const usedCount = isDemo ? t.usedCount : '124';
-            const editedTime = isDemo ? t.editedTime : formatRelativeTr(t.created_at || new Date().toISOString());
+          {displayTemplates.map((t: TemplateRow) => {
+            const rawTag = t.category ? t.category.toUpperCase() : 'ŞABLON';
+            const categoryTag = rawTag || 'ŞABLON';
+            const editedTime = formatRelativeTr(t.created_at || new Date().toISOString());
             
             // Icon styling based on category
             let iconBg = 'bg-[#3B82F6]/10 border-[#3B82F6]/30 text-[#3B82F6]';
@@ -508,16 +417,10 @@ GEREKÇELER  :
               <div 
                 key={t.id}
                 onClick={() => handleOpenPreview(t)}
-                className={`relative group p-6 rounded-2xl transition-all duration-300 flex flex-col justify-between cursor-pointer overflow-hidden ${
-                  isDashed 
-                    ? 'border-2 border-dashed border-[var(--color-divider)] hover:border-[#3B82F6]/60 bg-[var(--color-bg-base)]' 
-                    : 'bg-[var(--color-surface)] border border-[var(--color-divider)] hover:border-[#3B82F6]/60 shadow-sm'
-                }`}
+                className="relative group p-6 rounded-2xl transition-all duration-300 flex flex-col justify-between cursor-pointer overflow-hidden bg-[var(--color-surface)] border border-[var(--color-divider)] hover:border-[#3B82F6]/60 shadow-sm hover:shadow-md"
               >
                 {/* Top highlight line */}
-                {!isDashed && (
-                  <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/15 to-transparent"></div>
-                )}
+                <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#3B82F6]/30 to-transparent"></div>
 
                 <div>
                   {/* Category Tag & Explicit Action Buttons */}
@@ -540,7 +443,7 @@ GEREKÇELER  :
                           e.stopPropagation();
                           handleDownload(t);
                         }}
-                        className="text-[#64748B] hover:text-[#60A5FA] p-1.5 rounded-lg hover:bg-[#3B82F6]/10 transition-colors"
+                        className="text-[var(--color-text-muted)] hover:text-[#60A5FA] p-1.5 rounded-lg hover:bg-[#3B82F6]/10 transition-colors"
                         title="Dosyayı İndir"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -554,7 +457,7 @@ GEREKÇELER  :
                           handleOpenPreview(t);
                           setIsEditing(true);
                         }}
-                        className="text-[#64748B] hover:text-[#FBBF24] p-1.5 rounded-lg hover:bg-[#F59E0B]/10 transition-colors"
+                        className="text-[var(--color-text-muted)] hover:text-[#FBBF24] p-1.5 rounded-lg hover:bg-[#F59E0B]/10 transition-colors"
                         title="Metni ve Şablonu Düzenle"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -562,36 +465,34 @@ GEREKÇELER  :
                         </svg>
                       </button>
 
-                      {!isDemo && (
-                        <button 
-                          onClick={(e) => handleDelete(t, e)}
-                          className="text-[#64748B] hover:text-[#FB7185] p-1.5 rounded-lg hover:bg-red-500/10 transition-colors"
-                          title="Şablonu Sil"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      )}
+                      <button 
+                        onClick={(e) => handleDelete(t, e)}
+                        className="text-[var(--color-text-muted)] hover:text-[#FB7185] p-1.5 rounded-lg hover:bg-red-500/10 transition-colors"
+                        title="Şablonu Sil"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
 
                   {/* Title */}
-                  <h3 className={`text-[16px] font-bold text-white group-hover:text-[#60A5FA] transition-colors leading-snug mb-3 ${isDashed ? 'italic text-[#CBD5E1]' : ''}`}>
+                  <h3 className="text-[16px] font-bold text-[var(--color-text)] group-hover:text-[#3B82F6] transition-colors leading-snug mb-3">
                     {t.name}
                   </h3>
 
                   {t.description && (
-                    <p className="text-[12.5px] text-[#8C9BB4] line-clamp-2 mb-4 font-sans">
+                    <p className="text-[12.5px] text-[var(--color-text-muted)] line-clamp-2 mb-4 font-sans">
                       {t.description}
                     </p>
                   )}
                 </div>
 
                 {/* Footer Metadata */}
-                <div className="pt-4 border-t border-[#1E293B]/70 flex items-center justify-between text-[11px] font-mono text-[#64748B]">
-                  <span>Used: {usedCount}</span>
-                  <span>Edited {editedTime}</span>
+                <div className="pt-4 border-t border-[var(--color-divider)] flex items-center justify-between text-[11px] font-mono text-[var(--color-text-muted)]">
+                  <span>{t.file_size ? `${Math.round(t.file_size / 1024)} KB` : 'Belge'}</span>
+                  <span>{editedTime}</span>
                 </div>
               </div>
             );
@@ -682,7 +583,7 @@ GEREKÇELER  :
                     <div>
                       <label className="text-[11px] font-mono text-[var(--color-text-muted)] uppercase tracking-wider block mb-1.5">Kategori Seçimi</label>
                       <div className="flex flex-wrap gap-1.5 mb-2">
-                        {PRESET_CATEGORIES.map(cat => (
+                        {PRESET_SUGGESTIONS.map(cat => (
                           <button
                             key={cat}
                             type="button"
@@ -699,7 +600,7 @@ GEREKÇELER  :
                       </div>
                       <div className="flex items-center gap-2">
                         <select
-                          value={PRESET_CATEGORIES.includes(editCategory) ? editCategory : 'custom'}
+                          value={PRESET_SUGGESTIONS.includes(editCategory) ? editCategory : 'custom'}
                           onChange={e => {
                             if (e.target.value !== 'custom') {
                               setEditCategory(e.target.value);
@@ -708,7 +609,7 @@ GEREKÇELER  :
                           className="bg-[var(--color-bg-base)] border border-[var(--color-divider)] focus:border-[#3B82F6] rounded-xl px-3 py-2 text-[13px] text-[var(--color-text)] outline-none transition-colors cursor-pointer"
                         >
                           <option value="" disabled>Kategori Seçin...</option>
-                          {PRESET_CATEGORIES.map(cat => (
+                          {PRESET_SUGGESTIONS.map(cat => (
                             <option key={cat} value={cat}>{cat}</option>
                           ))}
                           <option value="custom">Özel Kategori...</option>
@@ -876,7 +777,7 @@ GEREKÇELER  :
                   Kategori Seçimi
                 </label>
                 <div className="flex flex-wrap gap-1.5 mb-2">
-                  {PRESET_CATEGORIES.map(cat => (
+                  {PRESET_SUGGESTIONS.map(cat => (
                     <button
                       key={cat}
                       type="button"
@@ -893,7 +794,7 @@ GEREKÇELER  :
                 </div>
                 <div className="flex items-center gap-2">
                   <select
-                    value={PRESET_CATEGORIES.includes(formCategory) ? formCategory : 'custom'}
+                    value={PRESET_SUGGESTIONS.includes(formCategory) ? formCategory : 'custom'}
                     onChange={e => {
                       if (e.target.value !== 'custom') {
                         setFormCategory(e.target.value);
@@ -902,7 +803,7 @@ GEREKÇELER  :
                     className="bg-[#0C1324] border border-[#1E293B] focus:border-[#3B82F6] rounded-xl px-3 py-2 text-[13px] text-white outline-none transition-colors cursor-pointer"
                   >
                     <option value="" disabled>Kategori Seçin...</option>
-                    {PRESET_CATEGORIES.map(cat => (
+                    {PRESET_SUGGESTIONS.map(cat => (
                       <option key={cat} value={cat}>{cat}</option>
                     ))}
                     <option value="custom">Özel Kategori...</option>
