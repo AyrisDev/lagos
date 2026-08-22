@@ -29,7 +29,7 @@ export function OnboardingModal({
   userEmail,
   initialFullName,
 }: OnboardingModalProps) {
-  const [step, setStep] = useState<number>(2); // Default preview to step 2 or 1
+  const [step, setStep] = useState<number>(1);
   const [fullName, setFullName] = useState<string>(initialFullName || '');
   const [officeName, setOfficeName] = useState<string>('');
   const [selectedAreas, setSelectedAreas] = useState<string[]>(['is_tazminat', 'ticaret_sirket']);
@@ -92,24 +92,73 @@ export function OnboardingModal({
   };
 
   const stepsMeta = [
-    { num: 1, title: 'Welcome', subtitle: 'Büro Profili' },
-    { num: 2, title: 'Chrome Extension & UYAP Integration', subtitle: 'Kurulum & Eklenti' },
-    { num: 3, title: 'Features Spotlight', subtitle: 'Temel Güçler' },
-    { num: 4, title: 'Ready to Go', subtitle: 'Başlangıç' },
+    { num: 1, title: 'Büro Profili', subtitle: 'Welcome' },
+    { num: 2, title: 'Chrome Eklentisi & UYAP', subtitle: 'UYAP Entegrasyonu' },
+    { num: 3, title: 'Özellik Turu', subtitle: 'Features Spotlight' },
+    { num: 4, title: 'Başlangıç', subtitle: 'Ready to Go' },
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-[#070A13]/85 backdrop-blur-xl animate-fadeIn">
-      {/* Outer Glow & Main Modal Box */}
-      <div className="relative w-full max-w-5xl bg-[#0C1222] border border-[#1E293B]/90 rounded-3xl shadow-[0_25px_70px_-15px_rgba(0,0,0,0.85)] overflow-hidden flex flex-col min-h-[580px] max-h-[92vh]">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 animate-fadeIn"
+      style={{
+        backgroundColor: 'rgba(5, 8, 16, 0.85)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+      }}
+    >
+      {/* Outer Glow & Main Glassmorphic Modal Box */}
+      <div 
+        className="relative w-full max-w-5xl rounded-3xl overflow-hidden flex flex-col min-h-[590px] max-h-[92vh]"
+        style={{
+          backgroundColor: '#0A101F',
+          border: '1px solid rgba(59, 130, 246, 0.35)',
+          boxShadow: '0 0 60px -10px rgba(59, 130, 246, 0.3), 0 30px 80px -20px rgba(0, 0, 0, 0.95)',
+        }}
+      >
         
+        {/* Background Ambient Glow Orbs */}
+        <div 
+          className="absolute -top-32 -left-32 w-96 h-96 rounded-full pointer-events-none"
+          style={{
+            background: 'radial-gradient(circle, rgba(59, 130, 246, 0.25) 0%, transparent 70%)',
+            filter: 'blur(40px)',
+          }}
+        />
+        <div 
+          className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full pointer-events-none"
+          style={{
+            background: 'radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, transparent 70%)',
+            filter: 'blur(40px)',
+          }}
+        />
+
         {/* Top subtle blue neon gradient line */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#3B82F6] to-transparent z-10"></div>
+        <div 
+          className="absolute top-0 left-0 right-0 h-[2px] z-10"
+          style={{
+            background: 'linear-gradient(90deg, transparent 0%, #3B82F6 50%, transparent 100%)',
+            boxShadow: '0 0 15px #3B82F6',
+          }}
+        />
 
         {/* TOP MODAL BAR */}
-        <div className="flex items-center justify-between px-6 sm:px-8 py-4 border-b border-[#1E293B]/70 bg-[#090E1B]/50 shrink-0">
+        <div 
+          className="flex items-center justify-between px-6 sm:px-8 py-4 shrink-0 z-20"
+          style={{
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            backgroundColor: 'rgba(9, 14, 27, 0.7)',
+            backdropFilter: 'blur(10px)',
+          }}
+        >
           <div className="flex items-center gap-2.5">
-            <span className="w-2 h-2 rounded-full bg-[#3B82F6] animate-pulse"></span>
+            <span 
+              className="w-2.5 h-2.5 rounded-full"
+              style={{
+                backgroundColor: '#3B82F6',
+                boxShadow: '0 0 10px #3B82F6, 0 0 20px #3B82F6',
+              }}
+            />
             <span className="font-mono text-[12px] font-bold uppercase tracking-widest text-[#94A3B8]">
               AYRIS LEGAL ONBOARDING
             </span>
@@ -124,16 +173,27 @@ export function OnboardingModal({
         </div>
 
         {/* MAIN BODY: 2 COLUMNS */}
-        <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+        <div className="flex-1 flex flex-col md:flex-row overflow-hidden z-10">
           
           {/* LEFT SIDEBAR: STEPPER NAVIGATION */}
-          <div className="w-full md:w-80 bg-[#090E1B]/80 border-b md:border-b-0 md:border-r border-[#1E293B]/70 p-6 sm:p-8 flex flex-col justify-between shrink-0">
+          <div 
+            className="w-full md:w-80 p-6 sm:p-8 flex flex-col justify-between shrink-0"
+            style={{
+              borderRight: '1px solid rgba(255, 255, 255, 0.08)',
+              backgroundColor: 'rgba(8, 12, 24, 0.75)',
+            }}
+          >
             <div className="relative">
               
               {/* Vertical connecting line */}
-              <div className="hidden md:block absolute left-[19px] top-6 bottom-6 w-[2px] bg-[#1E293B] -z-0"></div>
+              <div 
+                className="hidden md:block absolute left-[21px] top-6 bottom-6 w-[2px] -z-0"
+                style={{
+                  background: 'linear-gradient(180deg, rgba(59, 130, 246, 0.4) 0%, rgba(255, 255, 255, 0.08) 100%)',
+                }}
+              />
 
-              <div className="flex flex-row md:flex-col gap-3 md:gap-5 relative z-10">
+              <div className="flex flex-row md:flex-col gap-3 md:gap-4 relative z-10">
                 {stepsMeta.map((s) => {
                   const isActive = step === s.num;
                   const isPassed = step > s.num;
@@ -141,26 +201,28 @@ export function OnboardingModal({
                     <div
                       key={s.num}
                       onClick={() => setStep(s.num)}
-                      className={`relative flex items-center gap-3.5 p-3 rounded-2xl transition-all cursor-pointer ${
-                        isActive
-                          ? 'bg-[#15203B] border border-[#3B82F6]/70 shadow-[0_0_30px_rgba(59,130,246,0.22)]'
-                          : 'hover:bg-[#11182B] border border-transparent'
-                      }`}
+                      className="relative flex items-center gap-3.5 p-3.5 rounded-2xl transition-all cursor-pointer"
+                      style={{
+                        backgroundColor: isActive ? 'rgba(30, 58, 138, 0.35)' : 'transparent',
+                        border: isActive ? '1px solid rgba(59, 130, 246, 0.75)' : '1px solid transparent',
+                        boxShadow: isActive ? '0 0 25px rgba(59, 130, 246, 0.25)' : 'none',
+                        backdropFilter: isActive ? 'blur(8px)' : 'none',
+                      }}
                     >
                       {/* Step Indicator Dot / Icon */}
                       <div
-                        className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-mono font-bold shrink-0 transition-all ${
-                          isActive
-                            ? 'bg-[#3B82F6] text-white shadow-md shadow-[#3B82F6]/50'
-                            : isPassed
-                            ? 'bg-[#00E699]/15 border border-[#00E699]/40 text-[#00E699]'
-                            : 'bg-[#111827] border border-[#1E293B] text-[#64748B]'
-                        }`}
+                        className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-mono font-bold shrink-0 transition-all"
+                        style={{
+                          backgroundColor: isActive ? '#3B82F6' : isPassed ? 'rgba(0, 230, 153, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                          border: isPassed ? '1px solid rgba(0, 230, 153, 0.5)' : isActive ? 'none' : '1px solid rgba(255, 255, 255, 0.1)',
+                          color: isActive ? '#FFFFFF' : isPassed ? '#00E699' : '#64748B',
+                          boxShadow: isActive ? '0 0 15px rgba(59, 130, 246, 0.6)' : 'none',
+                        }}
                       >
                         {isPassed ? (
                           '✓'
                         ) : isActive ? (
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
                           </svg>
                         ) : (
@@ -172,18 +234,16 @@ export function OnboardingModal({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <p
-                            className={`text-[13.5px] font-bold leading-tight truncate ${
-                              isActive
-                                ? 'text-white'
-                                : isPassed
-                                ? 'text-[#CBD5E1]'
-                                : 'text-[#64748B]'
-                            }`}
+                            className="text-[13.5px] font-bold leading-tight truncate"
+                            style={{
+                              color: isActive ? '#FFFFFF' : isPassed ? '#CBD5E1' : '#64748B',
+                              textShadow: isActive ? '0 0 10px rgba(255, 255, 255, 0.3)' : 'none',
+                            }}
                           >
                             {s.num}. {s.title}
                           </p>
                           {isActive && (
-                            <span className="text-[#3B82F6] text-xs font-mono font-bold ml-1">›</span>
+                            <span className="text-[#3B82F6] text-sm font-mono font-bold ml-1">›</span>
                           )}
                         </div>
                       </div>
@@ -194,21 +254,37 @@ export function OnboardingModal({
             </div>
 
             {/* User Session Footer */}
-            <div className="hidden md:block pt-6 border-t border-[#1E293B]/70">
-              <p className="text-[10.5px] font-mono uppercase text-[#64748B] tracking-wider mb-1 font-semibold">Oturum</p>
+            <div 
+              className="hidden md:block pt-5"
+              style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}
+            >
+              <p className="text-[10.5px] font-mono uppercase text-[#64748B] tracking-wider mb-1 font-semibold">OTURUM</p>
               <p className="text-[12px] font-mono text-[#CBD5E1] truncate">{userEmail || 'Avukat Hesabı'}</p>
             </div>
           </div>
 
           {/* RIGHT CONTENT AREA */}
-          <div className="flex-1 p-6 sm:p-10 flex flex-col justify-between overflow-y-auto bg-[#0C1222]">
+          <div 
+            className="flex-1 p-6 sm:p-10 flex flex-col justify-between overflow-y-auto"
+            style={{
+              backgroundColor: 'rgba(10, 16, 31, 0.65)',
+            }}
+          >
             
             {/* STEP 1: WELCOME & OFFICE PROFILE */}
             {step === 1 && (
               <div className="flex flex-col gap-6 animate-fadeIn">
                 <div>
-                  <p className="text-[12px] font-mono text-[#64748B] mb-1">Step 1: Büro Yapılandırması</p>
-                  <h1 className="text-[26px] font-extrabold text-white tracking-tight leading-snug">
+                  <p className="text-[12px] font-mono text-[#64748B] mb-1 font-semibold">
+                    Step 1: Büro Yapılandırması
+                  </p>
+                  <h1 
+                    className="text-[28px] font-extrabold tracking-tight leading-snug"
+                    style={{
+                      color: '#FFFFFF',
+                      textShadow: '0 2px 10px rgba(0, 0, 0, 0.5)',
+                    }}
+                  >
                     Ayris Legal&apos;e Hoş Geldiniz! ⚖️
                   </h1>
                   <p className="text-[13.5px] text-[#94A3B8] mt-1">
@@ -219,35 +295,47 @@ export function OnboardingModal({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="text-[11px] font-mono text-[#94A3B8] uppercase tracking-wider block mb-1.5 font-bold">
-                      Avukat Adı Soyadı
+                      AVUKAT ADI SOYADI
                     </label>
                     <input
                       type="text"
                       placeholder="Örn: Av. Mehmet Yılmaz"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      className="w-full bg-[#080D1A] border border-[#1E293B] focus:border-[#3B82F6] rounded-xl px-4 py-2.5 text-[14px] text-white outline-none transition-all"
+                      className="w-full rounded-xl px-4 py-3 text-[14px] outline-none transition-all"
+                      style={{
+                        backgroundColor: '#060B16',
+                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                        color: '#FFFFFF',
+                        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.5)',
+                      }}
                     />
                   </div>
 
                   <div>
                     <label className="text-[11px] font-mono text-[#94A3B8] uppercase tracking-wider block mb-1.5 font-bold">
-                      Hukuk Bürosu Unvanı (Opsiyonel)
+                      HUKUK BÜROSU UNVANI (OPSİYONEL)
                     </label>
                     <input
                       type="text"
                       placeholder="Örn: Yılmaz & Ortakları Hukuk Bürosu"
                       value={officeName}
                       onChange={(e) => setOfficeName(e.target.value)}
-                      className="w-full bg-[#080D1A] border border-[#1E293B] focus:border-[#3B82F6] rounded-xl px-4 py-2.5 text-[14px] text-white outline-none transition-all"
+                      className="w-full rounded-xl px-4 py-3 text-[14px] outline-none transition-all"
+                      style={{
+                        backgroundColor: '#060B16',
+                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                        color: '#FFFFFF',
+                        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.5)',
+                      }}
                     />
                   </div>
                 </div>
 
                 <div>
                   <label className="text-[11px] font-mono text-[#94A3B8] uppercase tracking-wider block mb-2 font-bold flex items-center justify-between">
-                    <span>Ana Çalışma & Uzmanlık Alanlarınız</span>
-                    <span className="text-[10px] text-[#3B82F6]">AI asistanınız bu alanlara öncelik verir</span>
+                    <span>ANA ÇALIŞMA & UZMANLIK ALANLARINIZ</span>
+                    <span className="text-[10px] text-[#3B82F6] font-mono uppercase font-bold">AI Asistanınız bu alanlara öncelik verir</span>
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                     {PRACTICE_AREAS.map((area) => {
@@ -257,14 +345,16 @@ export function OnboardingModal({
                           key={area.id}
                           type="button"
                           onClick={() => toggleArea(area.id)}
-                          className={`p-2.5 rounded-xl text-[12px] font-medium text-left transition-all cursor-pointer border flex items-center justify-between ${
-                            isSelected
-                              ? 'bg-[#3B82F6]/15 border-[#3B82F6] text-white font-bold shadow-sm shadow-[#3B82F6]/10'
-                              : 'bg-[#080D1A] border-[#1E293B] text-[#94A3B8] hover:border-[#3B82F6]/50 hover:text-white'
-                          }`}
+                          className="p-3 rounded-xl text-[12.5px] font-medium text-left transition-all cursor-pointer flex items-center justify-between"
+                          style={{
+                            backgroundColor: isSelected ? 'rgba(37, 99, 235, 0.2)' : '#070C18',
+                            border: isSelected ? '1px solid #3B82F6' : '1px solid rgba(255, 255, 255, 0.08)',
+                            color: isSelected ? '#FFFFFF' : '#94A3B8',
+                            boxShadow: isSelected ? '0 0 15px rgba(59, 130, 246, 0.25)' : 'none',
+                          }}
                         >
-                          <span>{area.label}</span>
-                          {isSelected && <span className="text-[#3B82F6] text-xs">✓</span>}
+                          <span className="font-semibold">{area.label}</span>
+                          {isSelected && <span className="text-[#3B82F6] font-bold text-xs">✓</span>}
                         </button>
                       );
                     })}
@@ -273,14 +363,20 @@ export function OnboardingModal({
               </div>
             )}
 
-            {/* STEP 2: CHROME EXTENSION & UYAP INTEGRATION (EXACT MATCH TO DESIGN MOCKUP) */}
+            {/* STEP 2: CHROME EXTENSION & UYAP INTEGRATION (GLOWING GLASSMORPHISM) */}
             {step === 2 && (
               <div className="flex flex-col gap-5 animate-fadeIn">
                 <div>
-                  <p className="text-[12px] font-mono text-[#64748B] mb-1">
+                  <p className="text-[12px] font-mono text-[#64748B] mb-1 font-semibold">
                     Step 2: Kurulum ve Entegrasyon
                   </p>
-                  <h1 className="text-[26px] font-extrabold text-white tracking-tight leading-snug">
+                  <h1 
+                    className="text-[28px] font-extrabold tracking-tight leading-snug"
+                    style={{
+                      color: '#FFFFFF',
+                      textShadow: '0 2px 10px rgba(0, 0, 0, 0.5)',
+                    }}
+                  >
                     Chrome Eklentisi & UYAP Entegrasyonu
                   </h1>
                   <p className="text-[13.5px] text-[#94A3B8] mt-1">
@@ -289,18 +385,36 @@ export function OnboardingModal({
                 </div>
 
                 {/* GRAPHIC CARD: CHROME STORE BADGE + UYAP VISUAL FLOW */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center bg-[#080E1B] border border-[#1E293B] rounded-2xl p-5 sm:p-6 shadow-inner relative overflow-hidden">
+                <div 
+                  className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center rounded-2xl p-5 sm:p-6 relative overflow-hidden"
+                  style={{
+                    backgroundColor: '#060B16',
+                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                    boxShadow: 'inset 0 0 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(59, 130, 246, 0.1)',
+                  }}
+                >
                   
                   {/* Subtle background glow */}
-                  <div className="absolute right-0 top-0 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+                  <div 
+                    className="absolute right-0 top-0 w-80 h-80 rounded-full pointer-events-none"
+                    style={{
+                      background: 'radial-gradient(circle, rgba(59, 130, 246, 0.18) 0%, transparent 70%)',
+                      filter: 'blur(30px)',
+                    }}
+                  />
 
                   {/* Left part: Chrome Web Store Badge */}
                   <div className="lg:col-span-5 flex flex-col items-start justify-center gap-3 border-b lg:border-b-0 lg:border-r border-[#1E293B] pb-4 lg:pb-0 lg:pr-5">
                     <button
                       onClick={handleOpenChromeStore}
-                      className="group w-full flex items-center gap-3.5 bg-[#121A2D] hover:bg-[#18233C] border border-[#2A3B5C] hover:border-[#3B82F6] p-3.5 rounded-2xl transition-all shadow-md text-left cursor-pointer"
+                      className="group w-full flex items-center gap-3.5 p-3.5 rounded-2xl transition-all shadow-md text-left cursor-pointer"
+                      style={{
+                        backgroundColor: 'rgba(18, 26, 45, 0.8)',
+                        border: '1px solid rgba(59, 130, 246, 0.4)',
+                        boxShadow: '0 0 20px rgba(59, 130, 246, 0.15)',
+                      }}
                     >
-                      <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center p-1.5 shrink-0 shadow-sm group-hover:scale-105 transition-transform">
+                      <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center p-1.5 shrink-0 shadow-md group-hover:scale-105 transition-transform">
                         {/* Chrome Logo */}
                         <svg className="w-full h-full" viewBox="0 0 192 192" fill="none">
                           <circle cx="96" cy="96" r="40" fill="#4285F4"/>
@@ -310,7 +424,7 @@ export function OnboardingModal({
                         </svg>
                       </div>
                       <div>
-                        <p className="text-[10px] font-mono uppercase text-[#94A3B8] tracking-wider font-semibold">Available in the</p>
+                        <p className="text-[10px] font-mono uppercase text-[#94A3B8] tracking-wider font-semibold">AVAILABLE IN THE</p>
                         <p className="text-[14px] font-bold text-white group-hover:text-[#60A5FA] transition-colors leading-tight">
                           Chrome Web Store
                         </p>
@@ -318,27 +432,55 @@ export function OnboardingModal({
                     </button>
 
                     <div className="flex items-center gap-2 text-[11px] font-mono text-[#64748B] pl-1">
-                      <span className={`w-2 h-2 rounded-full ${extensionInstalled ? 'bg-[#00E699]' : 'bg-[#F59E0B]'}`}></span>
-                      <span>{extensionInstalled ? 'Eklenti bağlı ve aktif ✓' : 'Kurulum 10 saniye sürer'}</span>
+                      <span 
+                        className={`w-2 h-2 rounded-full ${extensionInstalled ? 'bg-[#00E699]' : 'bg-[#F59E0B]'}`}
+                        style={{
+                          boxShadow: extensionInstalled ? '0 0 8px #00E699' : '0 0 8px #F59E0B',
+                        }}
+                      />
+                      <span className="text-[#CBD5E1]">{extensionInstalled ? 'Eklenti bağlı ve aktif ✓' : 'Kurulum 10 saniye sürer'}</span>
                     </div>
                   </div>
 
                   {/* Right part: Interactive UYAP -> Ayris Data Flow Visual */}
                   <div className="lg:col-span-7 flex flex-col items-center justify-center p-2">
-                    <div className="w-full bg-[#11192A] border border-[#1E293B] rounded-xl p-3.5 shadow-lg relative overflow-hidden">
+                    <div 
+                      className="w-full rounded-xl p-3.5 relative overflow-hidden"
+                      style={{
+                        backgroundColor: '#0D1426',
+                        border: '1px solid rgba(59, 130, 246, 0.25)',
+                        boxShadow: '0 0 30px rgba(0, 0, 0, 0.5)',
+                      }}
+                    >
                       
                       {/* Browser header mockup */}
-                      <div className="flex items-center justify-between pb-2 mb-3 border-b border-[#1E293B]">
+                      <div 
+                        className="flex items-center justify-between pb-2 mb-3"
+                        style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}
+                      >
                         <div className="flex items-center gap-1.5">
                           <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]/80"></span>
                           <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]/80"></span>
                           <span className="w-2.5 h-2.5 rounded-full bg-[#10B981]/80"></span>
                         </div>
-                        <div className="flex items-center gap-2 px-2.5 py-0.5 rounded-md bg-[#080D1A] border border-[#1E293B] text-[10px] font-mono text-[#94A3B8]">
+                        <div 
+                          className="flex items-center gap-2 px-2.5 py-0.5 rounded-md text-[10px] font-mono text-[#94A3B8]"
+                          style={{
+                            backgroundColor: '#060B16',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                          }}
+                        >
                           <span>⚖️ vatandas.uyap.gov.tr</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <span className="text-[10px] bg-[#3B82F6]/20 text-[#60A5FA] px-1.5 py-0.5 rounded font-mono font-bold border border-[#3B82F6]/30">
+                          <span 
+                            className="text-[10px] px-2 py-0.5 rounded font-mono font-bold"
+                            style={{
+                              backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                              color: '#60A5FA',
+                              border: '1px solid rgba(59, 130, 246, 0.4)',
+                            }}
+                          >
                             Ayris Extension
                           </span>
                         </div>
@@ -349,7 +491,14 @@ export function OnboardingModal({
                         
                         {/* UYAP Side */}
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-lg bg-[#DC2626]/20 border border-[#DC2626]/40 flex items-center justify-center text-xs font-bold text-[#FCA5A5]">
+                          <div 
+                            className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold text-[#FCA5A5]"
+                            style={{
+                              backgroundColor: 'rgba(220, 38, 38, 0.2)',
+                              border: '1px solid rgba(220, 38, 38, 0.5)',
+                              boxShadow: '0 0 15px rgba(220, 38, 38, 0.2)',
+                            }}
+                          >
                             UYAP
                           </div>
                           <div className="hidden sm:block">
@@ -362,20 +511,33 @@ export function OnboardingModal({
                         <div className="flex-1 flex flex-col items-center justify-center px-2">
                           <div className="w-full flex items-center justify-center gap-1">
                             <span className="text-sm animate-bounce">📄</span>
-                            <div className="h-[2px] flex-1 bg-gradient-to-r from-[#DC2626]/60 via-[#3B82F6] to-[#3B82F6] rounded-full"></div>
-                            <span className="text-xs text-[#60A5FA]">➔</span>
+                            <div 
+                              className="h-[2px] flex-1 rounded-full"
+                              style={{
+                                background: 'linear-gradient(90deg, rgba(220, 38, 38, 0.8) 0%, #3B82F6 50%, #60A5FA 100%)',
+                                boxShadow: '0 0 10px #3B82F6',
+                              }}
+                            />
+                            <span className="text-xs text-[#60A5FA] font-bold">➔</span>
                           </div>
-                          <span className="text-[9px] font-mono text-[#3B82F6] mt-1 tracking-tight">Tek Tıkla Aktarım</span>
+                          <span className="text-[9px] font-mono text-[#3B82F6] mt-1 font-bold tracking-tight">Tek Tıkla Aktarım</span>
                         </div>
 
                         {/* Ayris Side */}
                         <div className="flex items-center gap-2">
-                          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#3B82F6] to-[#1D4ED8] border border-[#60A5FA]/60 flex items-center justify-center text-sm font-bold text-white shadow-[0_0_20px_rgba(59,130,246,0.5)]">
+                          <div 
+                            className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-extrabold text-white"
+                            style={{
+                              background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+                              border: '1px solid #60A5FA',
+                              boxShadow: '0 0 25px rgba(59, 130, 246, 0.7)',
+                            }}
+                          >
                             A
                           </div>
                           <div className="hidden sm:block">
                             <p className="text-[11px] font-bold text-[#60A5FA]">Ayris Masaüstü</p>
-                            <p className="text-[9px] font-mono text-[#00E699]">AI Analiz Hazır</p>
+                            <p className="text-[9px] font-mono text-[#00E699] font-bold">AI Analiz Hazır</p>
                           </div>
                         </div>
 
@@ -390,15 +552,33 @@ export function OnboardingModal({
 
                 {/* 3 Short Feature Pillars */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="p-3 rounded-xl bg-[#080E1B] border border-[#1E293B]">
+                  <div 
+                    className="p-3 rounded-xl"
+                    style={{
+                      backgroundColor: '#070C18',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                    }}
+                  >
                     <h4 className="text-[12px] font-bold text-white mb-0.5">⚡ Hızlı Aktarım</h4>
                     <p className="text-[11px] text-[#94A3B8]">Evrakları tek tek indirmeden doğrudan panele çekin.</p>
                   </div>
-                  <div className="p-3 rounded-xl bg-[#080E1B] border border-[#1E293B]">
+                  <div 
+                    className="p-3 rounded-xl"
+                    style={{
+                      backgroundColor: '#070C18',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                    }}
+                  >
                     <h4 className="text-[12px] font-bold text-white mb-0.5">🔒 Güvenli Şifreleme</h4>
                     <p className="text-[11px] text-[#94A3B8]">Verileriniz yerel olarak bilgisayarınızda işlenir.</p>
                   </div>
-                  <div className="p-3 rounded-xl bg-[#080E1B] border border-[#1E293B]">
+                  <div 
+                    className="p-3 rounded-xl"
+                    style={{
+                      backgroundColor: '#070C18',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                    }}
+                  >
                     <h4 className="text-[12px] font-bold text-white mb-0.5">📑 Otomatik Dava Kartı</h4>
                     <p className="text-[11px] text-[#94A3B8]">Dava no, taraf ve tensip bilgileri anında ayrıştırılır.</p>
                   </div>
@@ -410,8 +590,14 @@ export function OnboardingModal({
             {step === 3 && (
               <div className="flex flex-col gap-5 animate-fadeIn">
                 <div>
-                  <p className="text-[12px] font-mono text-[#64748B] mb-1">Step 3: Özellik Turu</p>
-                  <h1 className="text-[26px] font-extrabold text-white tracking-tight leading-snug">
+                  <p className="text-[12px] font-mono text-[#64748B] mb-1 font-semibold">Step 3: Özellik Turu</p>
+                  <h1 
+                    className="text-[28px] font-extrabold tracking-tight leading-snug"
+                    style={{
+                      color: '#FFFFFF',
+                      textShadow: '0 2px 10px rgba(0, 0, 0, 0.5)',
+                    }}
+                  >
                     Ayris Legal&apos;in Süper Güçleri 🚀
                   </h1>
                   <p className="text-[13.5px] text-[#94A3B8] mt-1">
@@ -421,9 +607,23 @@ export function OnboardingModal({
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Feature 1 */}
-                  <div className="bg-[#080E1B] border border-[#1E293B] hover:border-[#3B82F6]/60 rounded-2xl p-5 flex flex-col justify-between transition-all group shadow-sm">
+                  <div 
+                    className="rounded-2xl p-5 flex flex-col justify-between transition-all group cursor-default"
+                    style={{
+                      backgroundColor: '#060B16',
+                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      boxShadow: '0 0 25px rgba(59, 130, 246, 0.1)',
+                    }}
+                  >
                     <div>
-                      <div className="w-10 h-10 rounded-xl bg-[#3B82F6]/10 border border-[#3B82F6]/30 flex items-center justify-center text-[#3B82F6] text-xl mb-3 group-hover:scale-105 transition-transform">
+                      <div 
+                        className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-3"
+                        style={{
+                          backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                          border: '1px solid rgba(59, 130, 246, 0.5)',
+                          boxShadow: '0 0 15px rgba(59, 130, 246, 0.3)',
+                        }}
+                      >
                         🔍
                       </div>
                       <h3 className="text-[15px] font-bold text-white mb-1.5">
@@ -433,15 +633,32 @@ export function OnboardingModal({
                         Yargıtay, Danıştay ve BAM kararlarında semantik tarama yaparak davanıza en uygun emsalleri bulun.
                       </p>
                     </div>
-                    <div className="mt-4 pt-3 border-t border-[#1E293B] text-[10.5px] font-mono text-[#3B82F6]">
+                    <div 
+                      className="mt-4 pt-3 text-[10.5px] font-mono text-[#60A5FA] font-bold"
+                      style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}
+                    >
                       Semantik & Madde Motoru
                     </div>
                   </div>
 
                   {/* Feature 2 */}
-                  <div className="bg-[#080E1B] border border-[#1E293B] hover:border-[#00E699]/60 rounded-2xl p-5 flex flex-col justify-between transition-all group shadow-sm">
+                  <div 
+                    className="rounded-2xl p-5 flex flex-col justify-between transition-all group cursor-default"
+                    style={{
+                      backgroundColor: '#060B16',
+                      border: '1px solid rgba(0, 230, 153, 0.3)',
+                      boxShadow: '0 0 25px rgba(0, 230, 153, 0.1)',
+                    }}
+                  >
                     <div>
-                      <div className="w-10 h-10 rounded-xl bg-[#00E699]/10 border border-[#00E699]/30 flex items-center justify-center text-[#00E699] text-xl mb-3 group-hover:scale-105 transition-transform">
+                      <div 
+                        className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-3"
+                        style={{
+                          backgroundColor: 'rgba(0, 230, 153, 0.2)',
+                          border: '1px solid rgba(0, 230, 153, 0.5)',
+                          boxShadow: '0 0 15px rgba(0, 230, 153, 0.3)',
+                        }}
+                      >
                         🤖
                       </div>
                       <h3 className="text-[15px] font-bold text-white mb-1.5">
@@ -451,15 +668,32 @@ export function OnboardingModal({
                         Tensip zaptını veya dava dosyasını yükleyin; sistem talepleri, savunma noktalarını ve dilekçe taslağını hazırlasın.
                       </p>
                     </div>
-                    <div className="mt-4 pt-3 border-t border-[#1E293B] text-[10.5px] font-mono text-[#00E699]">
+                    <div 
+                      className="mt-4 pt-3 text-[10.5px] font-mono text-[#00E699] font-bold"
+                      style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}
+                    >
                       Hukuki Mantık Asistanı
                     </div>
                   </div>
 
                   {/* Feature 3 */}
-                  <div className="bg-[#080E1B] border border-[#1E293B] hover:border-[#A78BFA]/60 rounded-2xl p-5 flex flex-col justify-between transition-all group shadow-sm">
+                  <div 
+                    className="rounded-2xl p-5 flex flex-col justify-between transition-all group cursor-default"
+                    style={{
+                      backgroundColor: '#060B16',
+                      border: '1px solid rgba(167, 139, 250, 0.3)',
+                      boxShadow: '0 0 25px rgba(167, 139, 250, 0.1)',
+                    }}
+                  >
                     <div>
-                      <div className="w-10 h-10 rounded-xl bg-[#A78BFA]/10 border border-[#A78BFA]/30 flex items-center justify-center text-[#A78BFA] text-xl mb-3 group-hover:scale-105 transition-transform">
+                      <div 
+                        className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-3"
+                        style={{
+                          backgroundColor: 'rgba(167, 139, 250, 0.2)',
+                          border: '1px solid rgba(167, 139, 250, 0.5)',
+                          boxShadow: '0 0 15px rgba(167, 139, 250, 0.3)',
+                        }}
+                      >
                         📚
                       </div>
                       <h3 className="text-[15px] font-bold text-white mb-1.5">
@@ -469,7 +703,10 @@ export function OnboardingModal({
                         1000+ kanun maddesine çevrimdışı erişin, büronuzun özel şablonlarını yükleyip tek tıkla kullanın.
                       </p>
                     </div>
-                    <div className="mt-4 pt-3 border-t border-[#1E293B] text-[10.5px] font-mono text-[#A78BFA]">
+                    <div 
+                      className="mt-4 pt-3 text-[10.5px] font-mono text-[#A78BFA] font-bold"
+                      style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}
+                    >
                       Kişiselleştirilmiş Kütüphane
                     </div>
                   </div>
@@ -481,8 +718,14 @@ export function OnboardingModal({
             {step === 4 && (
               <div className="flex flex-col gap-5 animate-fadeIn">
                 <div>
-                  <p className="text-[12px] font-mono text-[#64748B] mb-1">Step 4: Başlangıç</p>
-                  <h1 className="text-[26px] font-extrabold text-white tracking-tight leading-snug">
+                  <p className="text-[12px] font-mono text-[#64748B] mb-1 font-semibold">Step 4: Başlangıç</p>
+                  <h1 
+                    className="text-[28px] font-extrabold tracking-tight leading-snug"
+                    style={{
+                      color: '#FFFFFF',
+                      textShadow: '0 2px 10px rgba(0, 0, 0, 0.5)',
+                    }}
+                  >
                     Tebrikler, Hazırsınız! 🎉
                   </h1>
                   <p className="text-[13.5px] text-[#94A3B8] mt-1">
@@ -493,9 +736,20 @@ export function OnboardingModal({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <button
                     onClick={() => handleComplete('cases')}
-                    className="p-4 rounded-2xl bg-[#080E1B] border border-[#1E293B] hover:border-[#3B82F6] text-left transition-all group cursor-pointer shadow-sm hover:shadow-[#3B82F6]/10 flex items-center gap-4"
+                    className="p-4 rounded-2xl text-left transition-all group cursor-pointer flex items-center gap-4"
+                    style={{
+                      backgroundColor: '#060B16',
+                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      boxShadow: '0 0 20px rgba(59, 130, 246, 0.1)',
+                    }}
                   >
-                    <div className="w-12 h-12 rounded-xl bg-[#3B82F6]/10 border border-[#3B82F6]/30 flex items-center justify-center text-2xl shrink-0 group-hover:scale-105 transition-transform">
+                    <div 
+                      className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 group-hover:scale-105 transition-transform"
+                      style={{
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        border: '1px solid rgba(59, 130, 246, 0.5)',
+                      }}
+                    >
                       📁
                     </div>
                     <div>
@@ -510,9 +764,20 @@ export function OnboardingModal({
 
                   <button
                     onClick={() => handleComplete('research')}
-                    className="p-4 rounded-2xl bg-[#080E1B] border border-[#1E293B] hover:border-[#00E699] text-left transition-all group cursor-pointer shadow-sm hover:shadow-[#00E699]/10 flex items-center gap-4"
+                    className="p-4 rounded-2xl text-left transition-all group cursor-pointer flex items-center gap-4"
+                    style={{
+                      backgroundColor: '#060B16',
+                      border: '1px solid rgba(0, 230, 153, 0.3)',
+                      boxShadow: '0 0 20px rgba(0, 230, 153, 0.1)',
+                    }}
                   >
-                    <div className="w-12 h-12 rounded-xl bg-[#00E699]/10 border border-[#00E699]/30 flex items-center justify-center text-2xl shrink-0 group-hover:scale-105 transition-transform">
+                    <div 
+                      className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 group-hover:scale-105 transition-transform"
+                      style={{
+                        backgroundColor: 'rgba(0, 230, 153, 0.2)',
+                        border: '1px solid rgba(0, 230, 153, 0.5)',
+                      }}
+                    >
                       🔍
                     </div>
                     <div>
@@ -527,9 +792,20 @@ export function OnboardingModal({
 
                   <button
                     onClick={() => handleComplete('drafting')}
-                    className="p-4 rounded-2xl bg-[#080E1B] border border-[#1E293B] hover:border-[#A78BFA] text-left transition-all group cursor-pointer shadow-sm hover:shadow-[#A78BFA]/10 flex items-center gap-4"
+                    className="p-4 rounded-2xl text-left transition-all group cursor-pointer flex items-center gap-4"
+                    style={{
+                      backgroundColor: '#060B16',
+                      border: '1px solid rgba(167, 139, 250, 0.3)',
+                      boxShadow: '0 0 20px rgba(167, 139, 250, 0.1)',
+                    }}
                   >
-                    <div className="w-12 h-12 rounded-xl bg-[#A78BFA]/10 border border-[#A78BFA]/30 flex items-center justify-center text-2xl shrink-0 group-hover:scale-105 transition-transform">
+                    <div 
+                      className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 group-hover:scale-105 transition-transform"
+                      style={{
+                        backgroundColor: 'rgba(167, 139, 250, 0.2)',
+                        border: '1px solid rgba(167, 139, 250, 0.5)',
+                      }}
+                    >
                       ✍️
                     </div>
                     <div>
@@ -544,9 +820,20 @@ export function OnboardingModal({
 
                   <button
                     onClick={() => handleComplete('overview')}
-                    className="p-4 rounded-2xl bg-[#080E1B] border border-[#1E293B] hover:border-[#F59E0B] text-left transition-all group cursor-pointer shadow-sm hover:shadow-[#F59E0B]/10 flex items-center gap-4"
+                    className="p-4 rounded-2xl text-left transition-all group cursor-pointer flex items-center gap-4"
+                    style={{
+                      backgroundColor: '#060B16',
+                      border: '1px solid rgba(245, 158, 11, 0.3)',
+                      boxShadow: '0 0 20px rgba(245, 158, 11, 0.1)',
+                    }}
                   >
-                    <div className="w-12 h-12 rounded-xl bg-[#F59E0B]/10 border border-[#F59E0B]/30 flex items-center justify-center text-2xl shrink-0 group-hover:scale-105 transition-transform">
+                    <div 
+                      className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 group-hover:scale-105 transition-transform"
+                      style={{
+                        backgroundColor: 'rgba(245, 158, 11, 0.2)',
+                        border: '1px solid rgba(245, 158, 11, 0.5)',
+                      }}
+                    >
                       📊
                     </div>
                     <div>
@@ -563,12 +850,19 @@ export function OnboardingModal({
             )}
 
             {/* BOTTOM CONTROLS (MATCHES DESIGN MOCKUP BUTTONS) */}
-            <div className="flex items-center justify-between pt-6 border-t border-[#1E293B] mt-6">
+            <div 
+              className="flex items-center justify-between pt-6 mt-6"
+              style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}
+            >
               <div>
                 {step > 1 && (
                   <button
                     onClick={() => setStep((s) => Math.max(1, s - 1))}
-                    className="px-4 py-2.5 rounded-xl border border-[#1E293B] text-[#94A3B8] hover:text-white text-[12.5px] font-mono transition-all cursor-pointer hover:bg-[#080E1B]"
+                    className="px-4 py-2.5 rounded-xl text-[#94A3B8] hover:text-white text-[12.5px] font-mono transition-all cursor-pointer"
+                    style={{
+                      backgroundColor: '#070C18',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                    }}
                   >
                     ← Geri
                   </button>
@@ -580,7 +874,11 @@ export function OnboardingModal({
                   <>
                     <button
                       onClick={handleOpenChromeStore}
-                      className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-6 py-2.5 rounded-xl font-bold text-[13px] shadow-[0_0_25px_rgba(37,99,235,0.4)] transition-all cursor-pointer flex items-center gap-2"
+                      className="text-white px-6 py-2.5 rounded-xl font-bold text-[13px] transition-all cursor-pointer flex items-center gap-2 hover:scale-[1.02]"
+                      style={{
+                        background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+                        boxShadow: '0 0 30px rgba(59, 130, 246, 0.6), 0 0 10px #3B82F6',
+                      }}
                     >
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 4.8a7.2 7.2 0 016.928 5.2h-6.928l-3.6-6.235A7.16 7.16 0 0112 4.8zm-7.2 7.2a7.16 7.16 0 012.072-5.064l3.6 6.235-3.6 6.235A7.16 7.16 0 014.8 12zm7.2 7.2a7.16 7.16 0 01-5.328-2.4l3.6-6.235 3.6 6.235A7.16 7.16 0 0112 19.2zm0-4.8a2.4 2.4 0 100-4.8 2.4 2.4 0 000 4.8z" />
@@ -589,7 +887,11 @@ export function OnboardingModal({
                     </button>
                     <button
                       onClick={() => setStep(3)}
-                      className="px-5 py-2.5 rounded-xl border border-[#1E293B] hover:border-[#334155] bg-[#111827] hover:bg-[#1E293B] text-[#94A3B8] hover:text-white text-[12.5px] font-semibold transition-all cursor-pointer"
+                      className="px-5 py-2.5 rounded-xl text-[#CBD5E1] hover:text-white text-[12.5px] font-semibold transition-all cursor-pointer"
+                      style={{
+                        backgroundColor: '#0D1426',
+                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                      }}
                     >
                       Daha Sonra Hatırlat
                     </button>
@@ -604,7 +906,11 @@ export function OnboardingModal({
                     </button>
                     <button
                       onClick={() => setStep((s) => Math.min(4, s + 1))}
-                      className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-6 py-2.5 rounded-xl font-bold text-[13px] shadow-[0_0_20px_rgba(37,99,235,0.35)] transition-all cursor-pointer flex items-center gap-2"
+                      className="text-white px-6 py-2.5 rounded-xl font-bold text-[13px] transition-all cursor-pointer flex items-center gap-2 hover:scale-[1.02]"
+                      style={{
+                        background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+                        boxShadow: '0 0 25px rgba(59, 130, 246, 0.5), 0 0 8px #3B82F6',
+                      }}
                     >
                       <span>Devam Et</span>
                       <span>→</span>
@@ -613,7 +919,11 @@ export function OnboardingModal({
                 ) : (
                   <button
                     onClick={() => handleComplete('overview')}
-                    className="bg-[#00E699] hover:bg-[#00C885] text-[#052E23] px-6 py-2.5 rounded-xl font-bold text-[13px] font-mono shadow-[0_0_25px_rgba(0,230,153,0.35)] transition-all cursor-pointer flex items-center gap-2"
+                    className="text-[#052E23] px-6 py-2.5 rounded-xl font-bold text-[13px] font-mono transition-all cursor-pointer flex items-center gap-2 hover:scale-[1.02]"
+                    style={{
+                      background: 'linear-gradient(135deg, #00E699 0%, #00C885 100%)',
+                      boxShadow: '0 0 30px rgba(0, 230, 153, 0.5), 0 0 10px #00E699',
+                    }}
                   >
                     <span>Çalışma Alanına Başla</span>
                     <span>🚀</span>
