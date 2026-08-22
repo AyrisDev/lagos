@@ -15,7 +15,7 @@
     "build:mas:arm64": "node scripts/bump-version.js && next build && electron-builder --mac mas --arm64",
     "build:mas:x64": "node scripts/bump-version.js && next build && electron-builder --mac mas --x64",
     "build:win": "node scripts/bump-version.js && node scripts/generate-icons.js && next build && electron-builder --win",
-    "build:appx": "node scripts/bump-version.js && node scripts/generate-icons.js && next build && electron-builder --win appx --x64",
+    "build:appx": "node scripts/bump-version.js && node scripts/generate-icons.js && next build && electron-builder --win appx nsis --x64",
     "build:all": "node scripts/bump-version.js && node scripts/generate-icons.js && next build && electron-builder -mw",
     "upload:mac": "node scripts/upload-release.js mac",
     "upload:win": "node scripts/upload-release.js windows",
