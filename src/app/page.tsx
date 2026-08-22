@@ -21,6 +21,7 @@ import { Settings } from '@/components/views/Settings';
 import { ToastProvider } from '@/components/ToastProvider';
 import { CommandPalette } from '@/components/CommandPalette';
 import { OnboardingModal } from '@/components/OnboardingModal';
+import { TutorialsModal } from '@/components/TutorialsModal';
 
 
 export default function Home() {
@@ -30,6 +31,7 @@ export default function Home() {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+  const [isTutorialsOpen, setIsTutorialsOpen] = useState(false);
 
   // Check if onboarding was completed previously
   useEffect(() => {
@@ -44,7 +46,14 @@ export default function Home() {
 
     const handleOpenOnboarding = () => setIsOnboardingOpen(true);
     window.addEventListener('open-onboarding', handleOpenOnboarding);
-    return () => window.removeEventListener('open-onboarding', handleOpenOnboarding);
+
+    const handleOpenTutorials = () => setIsTutorialsOpen(true);
+    window.addEventListener('open-tutorials', handleOpenTutorials);
+
+    return () => {
+      window.removeEventListener('open-onboarding', handleOpenOnboarding);
+      window.removeEventListener('open-tutorials', handleOpenTutorials);
+    };
   }, []);
 
   // Global Cmd+K / Ctrl+K keyboard shortcut listener
@@ -257,7 +266,7 @@ export default function Home() {
           {/* Bottom Controls & User */}
           <div>
             {/* Quick Launch Onboarding & Extension */}
-            <div style={{ padding: sidebarCollapsed ? '4px 4px' : '4px 12px' }}>
+            <div style={{ padding: sidebarCollapsed ? '4px 4px 2px' : '4px 12px 2px' }}>
               <button
                 onClick={() => setIsOnboardingOpen(true)}
                 title="Başlangıç Rehberi & UYAP Eklentisi"
@@ -272,6 +281,25 @@ export default function Home() {
               >
                 <span>🚀</span>
                 {!sidebarCollapsed && <span>Başlangıç Rehberi</span>}
+              </button>
+            </div>
+
+            {/* Quick Launch Video Tutorials */}
+            <div style={{ padding: sidebarCollapsed ? '2px 4px 6px' : '2px 12px 6px' }}>
+              <button
+                onClick={() => setIsTutorialsOpen(true)}
+                title="Kullanım & Video Eğitimleri (Akademi)"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8, padding: sidebarCollapsed ? '8px 0' : '6px 10px',
+                  justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
+                  border: '1px solid rgba(168, 85, 247, 0.35)', cursor: 'pointer', font: 'inherit', fontSize: 11, fontWeight: 600,
+                  color: '#C084FC',
+                  background: 'rgba(168, 85, 247, 0.1)',
+                  borderRadius: '8px', width: '100%', transition: 'all 0.15s ease'
+                }}
+              >
+                <span>🎓</span>
+                {!sidebarCollapsed && <span>Eğitim Videoları</span>}
               </button>
             </div>
 
@@ -389,6 +417,16 @@ export default function Home() {
           }}
           userEmail={currentUser?.email}
           initialFullName={currentUser?.fullName}
+        />
+
+        {/* Global Video Tutorials Modal */}
+        <TutorialsModal
+          isOpen={isTutorialsOpen}
+          onClose={() => setIsTutorialsOpen(false)}
+          onNavigate={(targetView) => {
+            setView(targetView);
+            setIsTutorialsOpen(false);
+          }}
         />
 
         {/* Global Spotlight / Command Palette */}

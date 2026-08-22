@@ -117,6 +117,15 @@ export function CommandPalette({
         },
       },
       {
+        id: 'act-tutorials',
+        title: 'Kullanım & Video Eğitimleri (Akademi)',
+        category: 'Hızlı İşlemler',
+        icon: '🎓',
+        action: () => {
+          window.dispatchEvent(new CustomEvent('open-tutorials'));
+        },
+      },
+      {
         id: 'act-theme',
         title: 'Temayı Değiştir (Açık / Koyu Mod)',
         category: 'Hızlı İşlemler',
