@@ -85,7 +85,7 @@ export function OnboardingModal({
   };
 
   const handleOpenChromeStore = () => {
-    const chromeUrl = 'https://chromewebstore.google.com/detail/ayris-legal-uyap-aktar%C4%B1/ayrislegal';
+    const chromeUrl = 'https://chromewebstore.google.com/detail/ayrislegal-uyap-dosya-ara/eceeinhnailmlfgbfdjakfegokfcjplj';
     if (typeof window !== 'undefined') {
       window.open(chromeUrl, '_blank', 'noopener,noreferrer');
     }

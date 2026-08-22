@@ -359,9 +359,18 @@ export function Overview({ setView }: OverviewProps) {
                   ⚡
                 </div>
                 <div className="font-bold text-[13.5px] text-[var(--color-text)]">UYAP Bildirim Akışı Bekleniyor</div>
-                <p className="text-[11.5px] opacity-75 max-w-sm leading-relaxed">
+                <p className="text-[11.5px] opacity-75 max-w-sm leading-relaxed mb-1">
                   UYAP eklentinizden dosya hareketleri, tebligatlar ve mahkeme bildirimleri aktarıldığında canlı akış burada listelenecektir.
                 </p>
+                <a
+                  href="https://chromewebstore.google.com/detail/ayrislegal-uyap-dosya-ara/eceeinhnailmlfgbfdjakfegokfcjplj"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#3B82F6]/10 hover:bg-[#3B82F6]/20 border border-[#3B82F6]/40 text-[#60A5FA] text-xs font-bold font-mono transition-all cursor-pointer shadow-sm mt-1"
+                >
+                  <span>🌐</span>
+                  <span>Chrome Eklentisini İndir & Kur</span>
+                </a>
               </div>
             ) : (
               <div className="flex flex-col gap-3">
