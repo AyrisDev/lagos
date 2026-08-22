@@ -215,9 +215,9 @@ export function Drafting({ initialCaseId, initialPetitionTypeId, hideCaseSelecto
         },
         body: JSON.stringify({
           case_id: caseId,
-          petition_type: currentPetitionItem.title,
+          petition_type: currentPetitionItem.id || currentPetitionItem.title,
           template_id: templateId || undefined,
-          notes: promptContext.enhancedNotes,
+          notes: userNotes,
           latest_analysis_summary_json: latestAnalysisSummaryJson,
         }),
       });
