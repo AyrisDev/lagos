@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { COURT_OPTIONS, API_URL } from '@/lib/constants';
 import { renderNarrativeMarkdown, str } from '@/lib/utils';
 import { PrecedentResult } from '@/types';
+import { MevzuatSearchView } from './MevzuatSearchView';
 
 export function Research() {
+  const [researchTab, setResearchTab] = useState<'precedents' | 'mevzuat'>('precedents');
   const [q, setQ] = useState('');
   const [selectedCourts, setSelectedCourts] = useState<string[]>(['YARGITAYKARARI', 'DANISTAYKARAR']);
   const [results, setResults] = useState<PrecedentResult[]>([]);
@@ -104,10 +106,49 @@ export function Research() {
   ];
 
   return (
-    <div className="flex-1 flex w-full h-full min-h-[500px] bg-[var(--color-bg-base)] text-[var(--color-text)] cyber-juris overflow-hidden rounded-xl border border-[var(--color-divider)]">
+    <div className="flex-1 flex flex-col w-full h-full min-h-[500px] bg-[var(--color-bg-base)] text-[var(--color-text)] cyber-juris overflow-hidden rounded-xl border border-[var(--color-divider)]">
       
-      {/* Sol Panel: Filtreler */}
-      <div className="w-[280px] sm:w-[320px] flex flex-col shrink-0 border-r border-[var(--color-divider)] bg-[var(--color-surface)] h-full overflow-hidden">
+      {/* Üst Sekme Seçici: Emsal İçtihatlar & Kanun Maddeleri */}
+      <div className="px-5 py-2.5 bg-[var(--color-surface)] border-b border-[var(--color-divider)] flex items-center justify-between shrink-0 shadow-sm">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setResearchTab('precedents')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-bold transition-all cursor-pointer ${
+              researchTab === 'precedents'
+                ? 'bg-[#3B82F6] text-white shadow-md shadow-[#3B82F6]/25'
+                : 'bg-[var(--color-bg-base)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] border border-[var(--color-divider)]'
+            }`}
+          >
+            <span>🏛️ Emsal İçtihatlar</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setResearchTab('mevzuat')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-bold transition-all cursor-pointer ${
+              researchTab === 'mevzuat'
+                ? 'bg-[#3B82F6] text-white shadow-md shadow-[#3B82F6]/25'
+                : 'bg-[var(--color-bg-base)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] border border-[var(--color-divider)]'
+            }`}
+          >
+            <span>⚖️ Mevzuat & Kanun Maddeleri</span>
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">26.900+</span>
+          </button>
+        </div>
+      </div>
+
+      {researchTab === 'mevzuat' ? (
+        <MevzuatSearchView
+          onSearchPrecedentForMadde={(phrase) => {
+            setResearchTab('precedents');
+            doSearch(1, phrase);
+          }}
+        />
+      ) : (
+        <div className="flex-1 flex w-full h-full min-h-0 overflow-hidden">
+          {/* Sol Panel: Filtreler */}
+          <div className="w-[280px] sm:w-[320px] flex flex-col shrink-0 border-r border-[var(--color-divider)] bg-[var(--color-surface)] h-full overflow-hidden">
         <div className="flex items-center justify-between p-4 sm:p-5 border-b border-[var(--color-divider)] shrink-0">
           <div className="flex items-center gap-2">
             <svg className="w-4 h-4 text-[var(--color-accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -576,6 +617,8 @@ export function Research() {
         </div>
       </div>
     </div>
+    )}
+  </div>
   );
 }
 

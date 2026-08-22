@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { API_URL } from '@/lib/constants';
 import * as localData from '@/lib/localData';
-import { exportDraftAsWord, exportDraftAsPdf, exportDraftAsUdf } from '@/lib/utils';
+import { exportDraftAsWord, exportDraftAsPdf, exportDraftAsUdf, stripHtml } from '@/lib/utils';
+import { TiptapPetitionEditor } from '@/components/editor/TiptapPetitionEditor';
 import { CaseOption } from '@/types';
 import {
   PETITION_CATEGORIES,
@@ -61,6 +62,7 @@ export function Drafting({ initialCaseId, initialPetitionTypeId, hideCaseSelecto
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [error, setError] = useState('');
+  const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(true);
 
   // Seçili Dilekçe Nesnesi
   const currentPetitionItem = useMemo(() => {
@@ -304,53 +306,56 @@ export function Drafting({ initialCaseId, initialPetitionTypeId, hideCaseSelecto
 
   const handleCopy = () => {
     if (!draftContent) return;
-    navigator.clipboard.writeText(draftContent);
+    const textToCopy = /<[a-z][\s\S]*>/i.test(draftContent) ? stripHtml(draftContent) : draftContent;
+    navigator.clipboard.writeText(textToCopy);
     setCopySuccess(true);
     setTimeout(() => setCopySuccess(false), 2000);
   };
 
-  const draftLines = draftContent ? draftContent.split('\n') : [];
+  const plainTextContent = /<[a-z][\s\S]*>/i.test(draftContent) ? stripHtml(draftContent) : draftContent;
+  const draftLines = plainTextContent ? plainTextContent.split('\n') : [];
 
   return (
-    <div className="flex-1 flex flex-col md:flex-row gap-5 p-3 bg-[var(--color-bg-base)] text-[var(--color-text)] cyber-juris font-sans overflow-hidden min-h-full">
+    <div className="flex-1 flex flex-col md:flex-row gap-4 p-2 sm:p-3 bg-[var(--color-bg-base)] text-[var(--color-text)] cyber-juris font-sans overflow-hidden min-h-full">
       
       {/* Sol Panel: Dilekçe Oluşturucu & Parametreler */}
-      <div className="w-full md:w-[380px] lg:w-[420px] bg-[var(--color-surface)] border border-[var(--color-divider)] rounded-2xl p-4 md:p-5 shadow-sm flex flex-col justify-between shrink-0 overflow-hidden relative">
-        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent z-10"></div>
+      {isLeftPanelOpen && (
+        <div className="w-full md:w-[320px] lg:w-[350px] bg-[var(--color-surface)] border border-[var(--color-divider)] rounded-2xl p-4 shadow-sm flex flex-col justify-between shrink-0 overflow-hidden relative animate-fadeIn">
+          <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent z-10"></div>
 
-        <div className="flex flex-col gap-3.5 overflow-y-auto cyber-juris-scroll flex-1 pr-0.5">
-          
-          {/* Header */}
-          <div className="flex items-center justify-between border-b border-[var(--color-divider)] pb-3 shrink-0">
-            <div className="flex items-center gap-2.5">
-              {onBack && (
-                <button
-                  onClick={onBack}
-                  className="w-8 h-8 rounded-lg bg-[var(--color-bg-base)] border border-[var(--color-divider)] hover:border-[#3B82F6] flex items-center justify-center text-[var(--color-text)] hover:text-[#3B82F6] transition-all cursor-pointer mr-0.5"
-                  title="Dilekçeler Listesine Dön"
-                >
-                  ←
-                </button>
-              )}
-              <div className="w-8 h-8 rounded-lg bg-[#3B82F6]/15 border border-[#3B82F6]/30 flex items-center justify-center text-[#3B82F6]">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
+          <div className="flex flex-col gap-3.5 overflow-y-auto cyber-juris-scroll flex-1 pr-0.5">
+            
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-[var(--color-divider)] pb-3 shrink-0">
+              <div className="flex items-center gap-2 min-w-0">
+                {onBack && (
+                  <button
+                    onClick={onBack}
+                    className="w-7 h-7 rounded-lg bg-[var(--color-bg-base)] border border-[var(--color-divider)] hover:border-[#3B82F6] flex items-center justify-center text-[var(--color-text)] hover:text-[#3B82F6] transition-all cursor-pointer mr-0.5 shrink-0"
+                    title="Dilekçeler Listesine Dön"
+                  >
+                    ←
+                  </button>
+                )}
+                <div className="w-7 h-7 rounded-lg bg-[#3B82F6]/15 border border-[#3B82F6]/30 flex items-center justify-center text-[#3B82F6] shrink-0">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div className="truncate">
+                  <h2 className="text-[14px] font-bold text-[var(--color-text)] tracking-tight truncate">AI Dilekçe Asistanı</h2>
+                  <span className="text-[10px] text-[var(--color-text-muted)] font-mono">HMK / CMK / İİK</span>
+                </div>
               </div>
-              <div>
-                <h2 className="text-[15px] font-bold text-[var(--color-text)] tracking-tight">AI Dilekçe Asistanı</h2>
-                <span className="text-[10.5px] text-[var(--color-text-muted)] font-mono">Türk Hukuku HMK/CMK/İİK Uygunluğu</span>
-              </div>
+
+              <button
+                onClick={() => setIsLeftPanelOpen(false)}
+                className="w-7 h-7 rounded-lg bg-[var(--color-bg-base)] border border-[var(--color-divider)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-divider)] flex items-center justify-center text-[12px] cursor-pointer transition-all shrink-0 ml-2"
+                title="Paneli Gizle (Genişletilmiş Düzenleyici)"
+              >
+                ◀
+              </button>
             </div>
-
-            <button 
-              onClick={() => setShowCatalogModal(true)}
-              className="bg-[#3B82F6]/10 hover:bg-[#3B82F6]/20 text-[#3B82F6] border border-[#3B82F6]/30 px-2.5 py-1.5 rounded-lg text-[11px] font-mono font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0"
-              title="80+ Dilekçe Türü Kataloğunu Aç"
-            >
-              <span>🔍 Kataloğu Aç</span>
-            </button>
-          </div>
 
           {/* Form Alanı */}
           <div className="flex flex-col gap-3 shrink-0 bg-[var(--color-bg-base)] border border-[var(--color-divider)] p-3.5 rounded-xl">
@@ -378,54 +383,28 @@ export function Drafting({ initialCaseId, initialPetitionTypeId, hideCaseSelecto
             </div>
 
             {/* 2. Hukuk Alanı & Dilekçe Türü */}
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <label className="text-[10.5px] font-mono text-[var(--color-text-muted)] uppercase tracking-wider block">2. Hukuk Alanı ve Dilekçe Türü</label>
-                <span className="text-[10px] font-mono text-[#3B82F6] font-bold">80+ Dilekçe</span>
-              </div>
-
-              {/* Kategori Filtresi */}
-              <select
-                value={selectedCategory}
-                onChange={e => {
-                  setSelectedCategory(e.target.value);
-                  const firstOfCat = getPetitionsByCategory(e.target.value)[0];
-                  if (firstOfCat) setPetitionTypeId(firstOfCat.id);
-                }}
-                className="w-full bg-[var(--color-surface)] border border-[var(--color-divider)] focus:border-[#3B82F6] rounded-lg px-2.5 py-1.5 text-[12px] text-[var(--color-text)] outline-none font-mono"
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10.5px] font-mono text-[var(--color-text-muted)] uppercase tracking-wider block">2. Hukuk Alanı ve Dilekçe Türü</label>
+              
+              <button
+                type="button"
+                onClick={() => setShowCatalogModal(true)}
+                className="w-full bg-[var(--color-surface)] hover:bg-[var(--color-divider)] border border-[var(--color-divider)] hover:border-[#3B82F6]/50 rounded-xl p-2.5 text-left transition-all flex items-center justify-between gap-2 cursor-pointer group shadow-sm"
+                title="80+ Dilekçe Türü Kataloğundan Seç"
               >
-                <option value="all">🌐 Tüm Hukuk Alanları (80+ Tür)</option>
-                {PETITION_CATEGORIES.map(cat => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.icon} {cat.name}
-                  </option>
-                ))}
-              </select>
-
-              {/* Dilekçe Türü Seçimi */}
-              <select 
-                value={petitionTypeId} 
-                onChange={e => setPetitionTypeId(e.target.value)}
-                className="w-full bg-[var(--color-surface)] border border-[var(--color-divider)] focus:border-[#3B82F6] rounded-lg px-2.5 py-1.5 text-[12px] text-[var(--color-text)] outline-none font-mono truncate font-semibold"
-              >
-                {selectedCategory === 'all' ? (
-                  PETITION_CATEGORIES.map(cat => (
-                    <optgroup key={cat.id} label={`${cat.icon} ${cat.name}`}>
-                      {PETITION_TYPES_CATALOG.filter(p => p.categoryId === cat.id).map(p => (
-                        <option key={p.id} value={p.id}>
-                          [{p.lawRef}] {p.title}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))
-                ) : (
-                  availablePetitions.map(p => (
-                    <option key={p.id} value={p.id}>
-                      [{p.lawRef}] {p.title}
-                    </option>
-                  ))
-                )}
-              </select>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-[10.5px] font-mono font-bold text-[#3B82F6] bg-[#3B82F6]/10 border border-[#3B82F6]/30 px-2 py-0.5 rounded shrink-0">
+                    {currentPetitionItem?.lawRef || 'HMK'}
+                  </span>
+                  <span className="text-[12px] font-semibold text-[var(--color-text)] truncate">
+                    {currentPetitionItem?.title || 'Dilekçe Türü Seçin'}
+                  </span>
+                </div>
+                <span className="text-[11px] font-mono font-bold text-[#3B82F6] group-hover:translate-x-0.5 transition-transform shrink-0 flex items-center gap-1">
+                  <span>Katalog (80+)</span>
+                  <span>🔍</span>
+                </span>
+              </button>
             </div>
 
             {/* Seçili Dilekçeye Özel Hukuki Rehber Kartı */}
@@ -575,32 +554,45 @@ export function Drafting({ initialCaseId, initialPetitionTypeId, hideCaseSelecto
           </div>
         </form>
       </div>
+      )}
 
       {/* Sağ Panel: Doküman Kağıdı ve Düzenleyici */}
       <div className="flex-1 bg-[var(--color-surface)] border border-[var(--color-divider)] rounded-2xl flex flex-col shadow-sm overflow-hidden relative min-h-[550px]">
         <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent z-10"></div>
 
         {/* Doküman Araç Çubuğu */}
-        <div className="bg-[var(--color-bg-base)] border-b border-[var(--color-divider)] px-4 md:px-6 py-3 flex items-center justify-between z-10 shrink-0">
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-[13px] font-bold text-[var(--color-text)] tracking-wide flex items-center gap-2">
-              <span>📄</span>
-              <span className="truncate max-w-[300px]">{currentPetitionItem.title}</span>
-            </span>
-            <span className="text-[10.5px] font-mono text-[#3B82F6] bg-[#3B82F6]/10 border border-[#3B82F6]/30 px-2 py-0.5 rounded font-bold">
-              {currentPetitionItem.lawRef}
-            </span>
-            <div className="h-4 w-[1px] bg-[var(--color-divider)] hidden sm:block"></div>
-            <span className="font-mono text-[11px] text-[var(--color-text-muted)] hidden sm:block">
-              {draftContent ? `${draftContent.length} karakter · ${draftLines.length} satır` : 'Boş Doküman'}
-            </span>
+        <div className="bg-[var(--color-bg-base)] border-b border-[var(--color-divider)] px-3 sm:px-5 py-2.5 flex items-center justify-between z-30 shrink-0 relative gap-2 min-h-[52px]">
+          <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
+            {!isLeftPanelOpen && (
+              <button
+                onClick={() => setIsLeftPanelOpen(true)}
+                className="bg-[var(--color-surface)] hover:bg-[var(--color-divider)] text-[#3B82F6] border border-[#3B82F6]/30 px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm"
+                title="AI Dilekçe Asistanı ve Parametreleri Aç"
+              >
+                <span>⚙️</span>
+                <span className="hidden sm:inline">Asistanı Aç</span>
+              </button>
+            )}
+
+            <div className="flex items-center gap-2 min-w-0 truncate">
+              <span className="font-mono text-[13px] font-bold text-[var(--color-text)] tracking-wide flex items-center gap-1.5 truncate">
+                <span>📄</span>
+                <span className="truncate">{currentPetitionItem.shortTitle || currentPetitionItem.title}</span>
+              </span>
+              <span className="text-[10.5px] font-mono text-[#3B82F6] bg-[#3B82F6]/10 border border-[#3B82F6]/30 px-2 py-0.5 rounded font-bold shrink-0 hidden sm:inline-block">
+                {currentPetitionItem.lawRef}
+              </span>
+              <span className="font-mono text-[11px] text-[var(--color-text-muted)] hidden md:inline-block shrink-0">
+                · {draftContent ? `${draftContent.length} kr. / ${draftLines.length} satır` : 'Boş Doküman'}
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center gap-2.5">
             <button 
               onClick={handleCopy}
               disabled={!draftContent}
-              className="bg-[var(--color-surface)] hover:bg-[var(--color-divider)] text-[var(--color-text)] px-3 py-1.5 rounded-lg text-[11.5px] font-mono font-semibold border border-[var(--color-divider)] transition-all cursor-pointer disabled:opacity-50"
+              className="bg-[var(--color-surface)] hover:bg-[var(--color-divider)] text-[var(--color-text)] px-3 py-1.5 rounded-lg text-[11.5px] font-mono font-semibold border border-[var(--color-divider)] transition-all cursor-pointer disabled:opacity-50 select-none"
             >
               {copySuccess ? '✓ Kopyalandı' : 'Metni Kopyala'}
             </button>
@@ -609,7 +601,7 @@ export function Drafting({ initialCaseId, initialPetitionTypeId, hideCaseSelecto
               <button 
                 onClick={() => setShowDownloadMenu(prev => !prev)}
                 disabled={!draftContent}
-                className="bg-[#3B82F6] hover:bg-[#2563EB] text-white px-3.5 py-1.5 rounded-lg text-[11.5px] font-mono font-bold tracking-wide transition-all shadow-md shadow-[#3B82F6]/20 cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                className="bg-[#3B82F6] hover:bg-[#2563EB] text-white px-3.5 py-1.5 rounded-lg text-[11.5px] font-mono font-bold tracking-wide transition-all shadow-md shadow-[#3B82F6]/20 cursor-pointer disabled:opacity-50 flex items-center gap-1.5 select-none"
               >
                 <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -621,41 +613,57 @@ export function Drafting({ initialCaseId, initialPetitionTypeId, hideCaseSelecto
               </button>
 
               {showDownloadMenu && (
-                <div className="absolute right-0 mt-2 w-48 bg-[var(--color-surface)] border border-[var(--color-divider)] rounded-xl shadow-2xl z-50 overflow-hidden py-1">
-                  <button 
-                    onClick={() => handleDownloadFormat('doc')}
-                    className="w-full px-4 py-2 text-left text-[12px] text-[var(--color-text)] hover:bg-[var(--color-divider)] flex items-center gap-2.5 font-mono cursor-pointer transition-colors"
-                  >
-                    <span className="text-[#3B82F6] font-bold text-[14px]">📄</span>
-                    <span>Word (.doc) İndir</span>
-                  </button>
+                <>
+                  {/* Dışarı tıklandığında menüyü kapatmak için backdrop */}
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setShowDownloadMenu(false)} 
+                  />
 
-                  <button 
-                    onClick={() => handleDownloadFormat('pdf')}
-                    className="w-full px-4 py-2 text-left text-[12px] text-[var(--color-text)] hover:bg-[var(--color-divider)] flex items-center gap-2.5 font-mono cursor-pointer transition-colors"
-                  >
-                    <span className="text-[#EF4444] font-bold text-[14px]">📕</span>
-                    <span>PDF (.pdf) İndir</span>
-                  </button>
+                  <div className="absolute right-0 mt-2 w-52 bg-[var(--color-surface)] border border-[var(--color-divider)] rounded-xl shadow-2xl z-50 overflow-hidden py-1.5 select-none">
+                    <button 
+                      onClick={() => {
+                        handleDownloadFormat('doc');
+                        setShowDownloadMenu(false);
+                      }}
+                      className="w-full px-3.5 py-2 text-left text-[12px] text-[var(--color-text)] hover:bg-[var(--color-bg-base)] flex items-center gap-2.5 font-sans cursor-pointer transition-colors"
+                    >
+                      <span className="text-[#3B82F6] font-bold text-[14px]">📄</span>
+                      <span>Word (.doc) İndir</span>
+                    </button>
 
-                  <button 
-                    onClick={() => handleDownloadFormat('udf')}
-                    className="w-full px-4 py-2 text-left text-[12px] text-[var(--color-text)] hover:bg-[var(--color-divider)] flex items-center gap-2.5 font-mono cursor-pointer transition-colors"
-                  >
-                    <span className="text-[#10B981] font-bold text-[14px]">⚖️</span>
-                    <span>UYAP (.udf) İndir</span>
-                  </button>
-                </div>
+                    <button 
+                      onClick={() => {
+                        handleDownloadFormat('pdf');
+                        setShowDownloadMenu(false);
+                      }}
+                      className="w-full px-3.5 py-2 text-left text-[12px] text-[var(--color-text)] hover:bg-[var(--color-bg-base)] flex items-center gap-2.5 font-sans cursor-pointer transition-colors"
+                    >
+                      <span className="text-[#EF4444] font-bold text-[14px]">📕</span>
+                      <span>PDF (.pdf) İndir</span>
+                    </button>
+
+                    <button 
+                      onClick={() => {
+                        handleDownloadFormat('udf');
+                        setShowDownloadMenu(false);
+                      }}
+                      className="w-full px-3.5 py-2 text-left text-[12px] text-[var(--color-text)] hover:bg-[var(--color-bg-base)] flex items-center gap-2.5 font-sans cursor-pointer transition-colors"
+                    >
+                      <span className="text-[#10B981] font-bold text-[14px]">⚖️</span>
+                      <span>UYAP (.udf) İndir</span>
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           </div>
         </div>
 
-        {/* Doküman Kağıt Alanı */}
-        <div className="flex-1 overflow-y-auto cyber-juris-scroll p-4 md:p-8 bg-[var(--color-bg-base)] flex justify-center relative">
-          
+        {/* Doküman Editör / Kağıt Alanı */}
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
           {loading && (
-            <div className="absolute inset-0 bg-[var(--color-bg-base)]/80 backdrop-blur-sm z-20 flex flex-col items-center justify-center gap-3">
+            <div className="absolute inset-0 bg-[var(--color-bg-base)]/80 backdrop-blur-sm z-40 flex flex-col items-center justify-center gap-3">
               <div className="w-10 h-10 border-3 border-[#3B82F6] border-t-transparent rounded-full animate-spin"></div>
               <div className="text-[#3B82F6] font-mono font-semibold text-[13px] text-center px-4">
                 [{currentPetitionItem.lawRef}] Hukuk kurallarına uygun dilekçe metni kaleme alınıyor...
@@ -664,45 +672,42 @@ export function Drafting({ initialCaseId, initialPetitionTypeId, hideCaseSelecto
           )}
 
           {error && (
-            <div className="absolute top-4 left-4 right-4 z-20 bg-red-500/20 border border-red-500/30 text-red-400 p-3 rounded-xl text-[13px] font-mono">
+            <div className="absolute top-3 left-4 right-4 z-40 bg-red-500/20 border border-red-500/30 text-red-400 p-3 rounded-xl text-[13px] font-mono">
               {error}
             </div>
           )}
 
-          <div className="w-full max-w-3xl bg-[var(--color-surface)] border border-[var(--color-divider)] rounded-2xl p-6 md:p-12 shadow-md text-[var(--color-text)] font-sans text-[14px] leading-relaxed flex flex-col gap-4 relative min-h-[500px]">
-            
-            {draftContent ? (
-              <textarea 
-                value={draftContent}
-                onChange={e => setDraftContent(e.target.value)}
-                className="w-full h-full min-h-[500px] bg-transparent text-[var(--color-text)] font-sans text-[14px] leading-relaxed border-none outline-none resize-none"
-              />
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center py-16 gap-3">
-                <div className="w-14 h-14 rounded-2xl bg-[#3B82F6]/10 border border-[#3B82F6]/20 flex items-center justify-center text-[#3B82F6]">
-                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          {draftContent ? (
+            <TiptapPetitionEditor 
+              content={draftContent}
+              onChange={(html) => setDraftContent(html)}
+            />
+          ) : (
+            <div className="flex-1 overflow-y-auto cyber-juris-scroll p-4 md:p-8 bg-[var(--color-bg-base)]">
+              <div className="w-full max-w-[840px] mx-auto bg-[var(--color-surface)] border border-[var(--color-divider)] rounded-2xl p-8 md:p-14 shadow-lg text-[var(--color-text)] flex flex-col items-center justify-center text-center py-20 gap-4 min-h-[600px] mb-16">
+                <div className="w-16 h-16 rounded-2xl bg-[#3B82F6]/10 border border-[#3B82F6]/20 flex items-center justify-center text-[#3B82F6] shadow-sm">
+                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                   </svg>
                 </div>
-                <h3 className="text-[16px] font-bold text-[var(--color-text)]">
+                <h3 className="text-[17px] font-bold text-[var(--color-text)]">
                   {currentPetitionItem ? `[${currentPetitionItem.lawRef}] ${currentPetitionItem.title}` : 'Dilekçe Hazırlanmaya Hazır'}
                 </h3>
-                <p className="text-[13px] text-[var(--color-text-muted)] max-w-md">
-                  Sol taraftaki panelden bir dava dosyası seçerek <strong className="text-[#3B82F6]">&quot;✨ [{currentPetitionItem.shortTitle}] Oluştur&quot;</strong> butonuna tıklayın.
+                <p className="text-[13.5px] text-[var(--color-text-muted)] max-w-md leading-relaxed">
+                  Sol taraftaki panelden dava dosyası ve kriterleri belirleyerek <strong className="text-[#3B82F6]">&quot;✨ [{currentPetitionItem.shortTitle}] Oluştur&quot;</strong> butonuna tıklayın.
                 </p>
-                <div className="flex flex-wrap justify-center gap-1.5 max-w-lg mt-2">
+                <div className="flex flex-wrap justify-center gap-1.5 max-w-lg mt-3">
                   {currentPetitionItem.keyElements.map((el, idx) => (
-                    <span key={idx} className="text-[11px] font-mono bg-[var(--color-bg-base)] border border-[var(--color-divider)] px-2 py-1 rounded text-[var(--color-text-muted)]">
+                    <span key={idx} className="text-[11px] font-mono bg-[var(--color-bg-base)] border border-[var(--color-divider)] px-2.5 py-1 rounded-md text-[var(--color-text-muted)]">
                       ✓ {el}
                     </span>
                   ))}
                 </div>
               </div>
-            )}
-
-          </div>
-
+            </div>
+          )}
         </div>
+
 
       </div>
 

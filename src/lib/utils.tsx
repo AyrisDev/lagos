@@ -17,13 +17,31 @@ export function draftFilenameBase(label: string): string {
   return (label || 'dilekce').replace(/[^\p{L}\p{N}]+/gu, '_');
 }
 
+export function stripHtml(html: string): string {
+  if (!html) return '';
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<\/h[1-6]>/gi, '\n\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .trim();
+}
+
 export function exportDraftAsWord(text: string, label: string) {
   if (!text.trim()) return;
+  const isHtml = /<[a-z][\s\S]*>/i.test(text);
+  const bodyContent = isHtml ? text : escapeHtml(text).replace(/\n/g, '<br>');
   const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
     <head><meta charset="utf-8"><title>${escapeHtml(label)}</title></head>
-    <body style="font-family:'Times New Roman',serif; font-size:12pt; line-height:1.6;">${escapeHtml(text).replace(/\n/g, '<br>')}</body>
+    <body style="font-family:'Times New Roman',serif; font-size:12pt; line-height:1.6;">${bodyContent}</body>
   </html>`;
-  const blob = new Blob(['﻿', html], { type: 'application/msword' });
+  const blob = new Blob(['\uFEFF', html], { type: 'application/msword' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -36,14 +54,18 @@ export function exportDraftAsWord(text: string, label: string) {
 
 export async function exportDraftAsPdf(text: string, label: string): Promise<{ ok: boolean; canceled?: boolean; error?: string } | void> {
   if (!text.trim()) return;
+  const isHtml = /<[a-z][\s\S]*>/i.test(text);
   const exportPdf = (window as unknown as { electron?: { exportPdf?: (text: string, filename: string) => Promise<{ ok: boolean; canceled?: boolean; error?: string }> } }).electron?.exportPdf;
   if (exportPdf) {
-    return await exportPdf(text, `${draftFilenameBase(label)}.pdf`);
+    return await exportPdf(isHtml ? stripHtml(text) : text, `${draftFilenameBase(label)}.pdf`);
   }
   // Electron dışında (örn. tarayıcıda geliştirme): yazdırma penceresi üzerinden PDF.
   const printWin = window.open('', '_blank');
   if (printWin) {
-    printWin.document.write(`<pre style="white-space:pre-wrap;font-family:'Times New Roman',serif;font-size:12pt;padding:40px;">${escapeHtml(text)}</pre>`);
+    const rendered = isHtml
+      ? `<div style="font-family:'Times New Roman',serif;font-size:12pt;line-height:1.6;padding:40px;">${text}</div>`
+      : `<pre style="white-space:pre-wrap;font-family:'Times New Roman',serif;font-size:12pt;padding:40px;">${escapeHtml(text)}</pre>`;
+    printWin.document.write(rendered);
     printWin.document.close();
     printWin.focus();
     printWin.print();
@@ -52,9 +74,11 @@ export async function exportDraftAsPdf(text: string, label: string): Promise<{ o
 
 export function exportDraftAsUdf(text: string, label: string) {
   if (!text.trim()) return;
+  const isHtml = /<[a-z][\s\S]*>/i.test(text);
+  const plainText = isHtml ? stripHtml(text) : text;
   const udfXml = `<?xml version="1.0" encoding="UTF-8"?>
 <template format="1.0">
-  <content><![CDATA[${text}]]></content>
+  <content><![CDATA[${plainText}]]></content>
 </template>`;
   const blob = new Blob(['\uFEFF', udfXml], { type: 'application/vnd.uyap.udf' });
   const url = URL.createObjectURL(blob);
@@ -66,6 +90,7 @@ export function exportDraftAsUdf(text: string, label: string) {
   a.remove();
   URL.revokeObjectURL(url);
 }
+
 
 export function formatBytes(bytes: number | null | undefined) {
   if (!bytes || bytes <= 0) return '—';

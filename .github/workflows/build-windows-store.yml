@@ -31,6 +31,11 @@ jobs:
 
       - name: Build Next.js & Generate AppX Package
         run: pnpm run build:appx
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://supa.ayris.tech
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTc4NjEyNDEwMCwiZXhwIjo0OTQxNzk3NzAwLCJyb2xlIjoiYW5vbiJ9.WR672lp6I9qqhgB68i6avw__nmG_9EyCE7FbbUfhosg
+          NEXT_PUBLIC_API_URL: https://apexapi.ayris.tech/api/
+
 
       - name: Upload Windows Store AppX Artifact
         uses: actions/upload-artifact@v4

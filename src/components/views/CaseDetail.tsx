@@ -1642,13 +1642,37 @@ ${textSnippets ? `#### 🔍 Belge Metinlerinden Çıkarılan Tespiti:\n${textSni
                       </div>
 
                       {legalBases.length > 0 ? (
-                        <ul className="flex flex-col gap-2.5 text-[13px] text-[var(--color-text-muted)] list-disc list-inside">
+                        <div className="flex flex-col gap-2">
                           {legalBases.map((item, idx) => (
-                            <li key={idx}>
-                              <strong className="text-[var(--color-text)] font-mono">{item.code}:</strong> <span className="text-[var(--color-text-muted)] font-medium">{item.description}</span>
-                            </li>
+                            <div 
+                              key={idx}
+                              className="bg-[var(--color-surface)] border border-[var(--color-divider)] hover:border-[#3B82F6]/40 p-3 rounded-xl flex items-center justify-between gap-3 transition-all group"
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <span className="bg-[#3B82F6]/15 text-[#3B82F6] border border-[#3B82F6]/30 px-2 py-0.5 rounded font-mono text-[11px] font-bold shrink-0">
+                                  {item.code}
+                                </span>
+                                <span className="text-[12.5px] text-[var(--color-text)] font-medium truncate">
+                                  {item.description}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSection('dilekceler');
+                                    setIsDraftingStudioOpen(true);
+                                  }}
+                                  className="text-[11px] font-mono text-[#3B82F6] hover:bg-[#3B82F6]/10 px-2 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer font-semibold"
+                                  title="Bu maddeye dayalı dilekçe oluştur"
+                                >
+                                  <span>✍️ Dilekçe Yaz</span>
+                                </button>
+                              </div>
+                            </div>
                           ))}
-                        </ul>
+                        </div>
                       ) : (
                         <div className="bg-[#080D1A] border border-dashed border-[#1E293B] rounded-xl p-5 text-center flex flex-col items-center justify-center gap-2.5 my-1">
                           <div className="text-xl opacity-60">⚖️</div>

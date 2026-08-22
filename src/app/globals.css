@@ -515,3 +515,90 @@ label, th, .uppercase-label {
   animation: draftingPulse 2s infinite;
 }
 
+/* Tiptap Rich Text Editor Legal Styling */
+.tiptap-prosemirror-paper,
+.tiptap-prosemirror-paper .ProseMirror,
+.tiptap-prosemirror-paper .ProseMirror:focus,
+.tiptap-prosemirror-paper .ProseMirror:focus-visible,
+.tiptap-prosemirror-paper *:focus,
+.tiptap-prosemirror-paper *:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.tiptap-prosemirror-paper .ProseMirror {
+  min-height: 750px;
+  cursor: text;
+}
+
+.tiptap-prosemirror-paper p {
+  margin-bottom: 1rem;
+  line-height: 1.8;
+  color: var(--color-text);
+}
+
+.tiptap-prosemirror-paper h1 {
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.01em;
+  color: var(--color-text);
+}
+
+.tiptap-prosemirror-paper h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 0.65rem;
+  color: var(--color-text);
+}
+
+.tiptap-prosemirror-paper h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-text);
+}
+
+.tiptap-prosemirror-paper ul {
+  list-style-type: disc;
+  padding-left: 1.75rem;
+  margin-bottom: 1rem;
+}
+
+.tiptap-prosemirror-paper ol {
+  list-style-type: decimal;
+  padding-left: 1.75rem;
+  margin-bottom: 1rem;
+}
+
+.tiptap-prosemirror-paper li {
+  margin-bottom: 0.35rem;
+  line-height: 1.7;
+}
+
+.tiptap-prosemirror-paper blockquote {
+  border-left: 3px solid #3B82F6;
+  padding: 0.75rem 1.25rem;
+  margin: 1.25rem 0;
+  font-style: italic;
+  color: var(--color-text-muted);
+  background: rgba(59, 130, 246, 0.06);
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.tiptap-prosemirror-paper hr {
+  border: none;
+  border-top: 1px solid var(--color-divider);
+  margin: 2rem 0;
+}
+
+.tiptap-prosemirror-paper strong {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+
