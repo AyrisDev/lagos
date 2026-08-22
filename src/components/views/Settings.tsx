@@ -5,7 +5,7 @@ import { formatBytes, formatRelativeTr, useSupabaseToken, supportCategoryLabel }
 import { Theme, SettingsSection, SupportMessageRow, CurrentUser } from '@/types';
 import { useToast } from '@/components/ToastProvider';
 
-export function Settings({ currentUser, theme, toggleTheme, handleSignOut }: { currentUser: CurrentUser | null, theme: Theme, toggleTheme: () => void, handleSignOut: () => void }) {
+export function Settings({ currentUser, theme, toggleTheme, handleSignOut, onOpenOnboarding }: { currentUser: CurrentUser | null, theme: Theme, toggleTheme: () => void, handleSignOut: () => void, onOpenOnboarding?: () => void }) {
   const { toast, confirm: confirmDialog } = useToast();
   const [section, setSection] = useState<SettingsSection>('kullanici');
   const [appVersion, setAppVersion] = useState<string | null>(null);
@@ -475,7 +475,10 @@ export function Settings({ currentUser, theme, toggleTheme, handleSignOut }: { c
         {/* Quick Launch Onboarding Button */}
         <div className="mt-auto pt-4 border-t border-[#1E293B]/60">
           <button
-            onClick={() => window.dispatchEvent(new CustomEvent('open-onboarding'))}
+            onClick={() => {
+              if (onOpenOnboarding) onOpenOnboarding();
+              else window.dispatchEvent(new CustomEvent('open-onboarding'));
+            }}
             className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl bg-gradient-to-r from-[#3B82F6]/15 to-[#8B5CF6]/15 hover:from-[#3B82F6]/25 hover:to-[#8B5CF6]/25 border border-[#3B82F6]/30 text-[#60A5FA] font-mono text-[11px] font-bold transition-all cursor-pointer shadow-sm"
           >
             <span>🚀</span>

@@ -40,6 +40,13 @@ export function OnboardingModal({
     if (initialFullName) setFullName(initialFullName);
   }, [initialFullName]);
 
+  // Reset to step 1 whenever modal is opened
+  useEffect(() => {
+    if (isOpen) {
+      setStep(1);
+    }
+  }, [isOpen]);
+
   // Check if Chrome extension is already communicating / active
   useEffect(() => {
     const handleExtensionMsg = (event: MessageEvent) => {

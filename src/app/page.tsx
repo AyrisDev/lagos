@@ -256,6 +256,25 @@ export default function Home() {
 
           {/* Bottom Controls & User */}
           <div>
+            {/* Quick Launch Onboarding & Extension */}
+            <div style={{ padding: sidebarCollapsed ? '4px 4px' : '4px 12px' }}>
+              <button
+                onClick={() => setIsOnboardingOpen(true)}
+                title="Başlangıç Rehberi & UYAP Eklentisi"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8, padding: sidebarCollapsed ? '8px 0' : '6px 10px',
+                  justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
+                  border: '1px solid var(--sidebar-border, #1E293B)', cursor: 'pointer', font: 'inherit', fontSize: 11, fontWeight: 600,
+                  color: '#60A5FA',
+                  background: 'rgba(59, 130, 246, 0.08)',
+                  borderRadius: '8px', width: '100%', transition: 'all 0.15s ease'
+                }}
+              >
+                <span>🚀</span>
+                {!sidebarCollapsed && <span>Başlangıç Rehberi</span>}
+              </button>
+            </div>
+
             {/* Quick Theme Toggle Button */}
             <div style={{ padding: sidebarCollapsed ? '8px 4px' : '8px 12px', borderTop: '1px solid var(--sidebar-border, #1E293B)' }}>
               <button
@@ -286,23 +305,23 @@ export default function Home() {
               </div>
               {!sidebarCollapsed && (
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text, #FFFFFF)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {currentUser?.fullName || currentUser?.email || 'Kullanıcı'}
+                  <div style={{ fontSize: 13, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--color-text, #FFFFFF)' }}>
+                    {currentUser?.fullName || currentUser?.email}
                   </div>
-                  <div
+                  <button
                     onClick={handleSignOut}
-                    style={{ fontSize: 11, color: 'var(--color-text-muted, #64748B)', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 2 }}
+                    style={{ background: 'none', border: 'none', padding: 0, color: 'var(--sidebar-text, #94A3B8)', fontSize: 11, cursor: 'pointer', textDecoration: 'underline', opacity: 0.7 }}
                   >
                     Çıkış yap
-                  </div>
+                  </button>
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Main */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0, height: '100%' }}>
+        {/* Main Content Area */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minWidth: 0, overflow: 'hidden' }}>
 
           {/* Content (Views persist in background) */}
           {visitedViews.has('overview') && (
@@ -318,13 +337,13 @@ export default function Home() {
           )}
 
           {visitedViews.has('research') && (
-            <div style={{ display: view === 'research' ? 'flex' : 'none', flexDirection: 'column', flex: 1, height: '100%', minHeight: 0, padding: '16px', overflowY: 'hidden' }}>
+            <div style={{ display: view === 'research' ? 'flex' : 'none', flexDirection: 'column', flex: 1, height: '100%', minHeight: 0, padding: '24px', overflowY: 'auto' }}>
               <Research />
             </div>
           )}
 
           {visitedViews.has('drafting') && (
-            <div style={{ display: view === 'drafting' ? 'flex' : 'none', flexDirection: 'column', flex: 1, height: '100%', minHeight: 0, padding: '16px', overflowY: 'hidden' }}>
+            <div style={{ display: view === 'drafting' ? 'flex' : 'none', flexDirection: 'column', flex: 1, height: '100%', minHeight: 0, padding: '24px', overflowY: 'auto' }}>
               <Drafting />
             </div>
           )}
@@ -355,7 +374,7 @@ export default function Home() {
 
           {visitedViews.has('settings') && (
             <div style={{ display: view === 'settings' ? 'flex' : 'none', flexDirection: 'column', flex: 1, height: '100%', minHeight: 0, padding: '24px', overflowY: 'auto' }}>
-              <Settings currentUser={currentUser} theme={theme} toggleTheme={toggleTheme} handleSignOut={handleSignOut} />
+              <Settings currentUser={currentUser} theme={theme} toggleTheme={toggleTheme} handleSignOut={handleSignOut} onOpenOnboarding={() => setIsOnboardingOpen(true)} />
             </div>
           )}
         </div>
