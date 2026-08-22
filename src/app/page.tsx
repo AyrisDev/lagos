@@ -20,6 +20,7 @@ import { Chat } from '@/components/views/Chat';
 import { Settings } from '@/components/views/Settings';
 import { ToastProvider } from '@/components/ToastProvider';
 import { CommandPalette } from '@/components/CommandPalette';
+import { OnboardingModal } from '@/components/OnboardingModal';
 
 
 export default function Home() {
@@ -28,6 +29,23 @@ export default function Home() {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+
+  // Check if onboarding was completed previously
+  useEffect(() => {
+    try {
+      const completed = localStorage.getItem('ayrislegal-onboarding-completed');
+      if (completed !== 'true') {
+        setIsOnboardingOpen(true);
+      }
+    } catch {
+      // ignore
+    }
+
+    const handleOpenOnboarding = () => setIsOnboardingOpen(true);
+    window.addEventListener('open-onboarding', handleOpenOnboarding);
+    return () => window.removeEventListener('open-onboarding', handleOpenOnboarding);
+  }, []);
 
   // Global Cmd+K / Ctrl+K keyboard shortcut listener
   useEffect(() => {
@@ -341,6 +359,18 @@ export default function Home() {
             </div>
           )}
         </div>
+
+        {/* Global Onboarding Flow Modal */}
+        <OnboardingModal
+          isOpen={isOnboardingOpen}
+          onClose={() => setIsOnboardingOpen(false)}
+          onNavigate={(targetView) => {
+            setView(targetView);
+            setIsOnboardingOpen(false);
+          }}
+          userEmail={currentUser?.email}
+          initialFullName={currentUser?.fullName}
+        />
 
         {/* Global Spotlight / Command Palette */}
         <CommandPalette

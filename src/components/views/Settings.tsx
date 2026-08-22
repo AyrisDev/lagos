@@ -471,6 +471,17 @@ export function Settings({ currentUser, theme, toggleTheme, handleSignOut }: { c
             );
           })}
         </div>
+
+        {/* Quick Launch Onboarding Button */}
+        <div className="mt-auto pt-4 border-t border-[#1E293B]/60">
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('open-onboarding'))}
+            className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl bg-gradient-to-r from-[#3B82F6]/15 to-[#8B5CF6]/15 hover:from-[#3B82F6]/25 hover:to-[#8B5CF6]/25 border border-[#3B82F6]/30 text-[#60A5FA] font-mono text-[11px] font-bold transition-all cursor-pointer shadow-sm"
+          >
+            <span>🚀</span>
+            <span>Başlangıç Rehberi & Eklenti</span>
+          </button>
+        </div>
       </div>
 
       {/* Sağ: İçerik Kartı */}

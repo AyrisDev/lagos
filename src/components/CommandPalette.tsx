@@ -108,6 +108,15 @@ export function CommandPalette({
 
       // Hızlı Aksiyonlar
       {
+        id: 'act-onboarding',
+        title: 'Başlangıç Rehberi & UYAP Chrome Eklentisi',
+        category: 'Hızlı İşlemler',
+        icon: '🚀',
+        action: () => {
+          window.dispatchEvent(new CustomEvent('open-onboarding'));
+        },
+      },
+      {
         id: 'act-theme',
         title: 'Temayı Değiştir (Açık / Koyu Mod)',
         category: 'Hızlı İşlemler',
