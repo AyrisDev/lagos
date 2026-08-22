@@ -102,18 +102,18 @@ export function OnboardingModal({
     <div 
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 animate-fadeIn"
       style={{
-        backgroundColor: 'rgba(5, 8, 16, 0.85)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
+        backgroundColor: 'rgba(4, 7, 15, 0.88)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
       }}
     >
       {/* Outer Glow & Main Glassmorphic Modal Box */}
       <div 
         className="relative w-full max-w-5xl rounded-3xl overflow-hidden flex flex-col min-h-[590px] max-h-[92vh]"
         style={{
-          backgroundColor: '#0A101F',
-          border: '1px solid rgba(59, 130, 246, 0.35)',
-          boxShadow: '0 0 60px -10px rgba(59, 130, 246, 0.3), 0 30px 80px -20px rgba(0, 0, 0, 0.95)',
+          backgroundColor: '#090E1B',
+          border: '1px solid rgba(59, 130, 246, 0.4)',
+          boxShadow: '0 0 70px -10px rgba(59, 130, 246, 0.35), 0 30px 90px -20px rgba(0, 0, 0, 0.95)',
         }}
       >
         
@@ -121,15 +121,15 @@ export function OnboardingModal({
         <div 
           className="absolute -top-32 -left-32 w-96 h-96 rounded-full pointer-events-none"
           style={{
-            background: 'radial-gradient(circle, rgba(59, 130, 246, 0.25) 0%, transparent 70%)',
-            filter: 'blur(40px)',
+            background: 'radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%)',
+            filter: 'blur(45px)',
           }}
         />
         <div 
           className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full pointer-events-none"
           style={{
-            background: 'radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, transparent 70%)',
-            filter: 'blur(40px)',
+            background: 'radial-gradient(circle, rgba(139, 92, 246, 0.25) 0%, transparent 70%)',
+            filter: 'blur(45px)',
           }}
         />
 
@@ -138,7 +138,7 @@ export function OnboardingModal({
           className="absolute top-0 left-0 right-0 h-[2px] z-10"
           style={{
             background: 'linear-gradient(90deg, transparent 0%, #3B82F6 50%, transparent 100%)',
-            boxShadow: '0 0 15px #3B82F6',
+            boxShadow: '0 0 20px #3B82F6',
           }}
         />
 
@@ -147,7 +147,7 @@ export function OnboardingModal({
           className="flex items-center justify-between px-6 sm:px-8 py-4 shrink-0 z-20"
           style={{
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-            backgroundColor: 'rgba(9, 14, 27, 0.7)',
+            backgroundColor: 'rgba(7, 11, 22, 0.75)',
             backdropFilter: 'blur(10px)',
           }}
         >
@@ -159,13 +159,17 @@ export function OnboardingModal({
                 boxShadow: '0 0 10px #3B82F6, 0 0 20px #3B82F6',
               }}
             />
-            <span className="font-mono text-[12px] font-bold uppercase tracking-widest text-[#94A3B8]">
+            <span 
+              className="font-mono text-[12px] font-bold uppercase tracking-widest"
+              style={{ color: '#94A3B8' }}
+            >
               AYRIS LEGAL ONBOARDING
             </span>
           </div>
           <button
             onClick={() => handleComplete('overview')}
-            className="text-[#64748B] hover:text-white text-[19px] p-1 transition-colors cursor-pointer"
+            className="text-[19px] p-1 transition-colors cursor-pointer"
+            style={{ color: '#64748B' }}
             title="Kapat"
           >
             ✕
@@ -180,7 +184,7 @@ export function OnboardingModal({
             className="w-full md:w-80 p-6 sm:p-8 flex flex-col justify-between shrink-0"
             style={{
               borderRight: '1px solid rgba(255, 255, 255, 0.08)',
-              backgroundColor: 'rgba(8, 12, 24, 0.75)',
+              backgroundColor: 'rgba(6, 10, 20, 0.8)',
             }}
           >
             <div className="relative">
@@ -189,7 +193,7 @@ export function OnboardingModal({
               <div 
                 className="hidden md:block absolute left-[21px] top-6 bottom-6 w-[2px] -z-0"
                 style={{
-                  background: 'linear-gradient(180deg, rgba(59, 130, 246, 0.4) 0%, rgba(255, 255, 255, 0.08) 100%)',
+                  background: 'linear-gradient(180deg, rgba(59, 130, 246, 0.5) 0%, rgba(255, 255, 255, 0.08) 100%)',
                 }}
               />
 
@@ -203,9 +207,9 @@ export function OnboardingModal({
                       onClick={() => setStep(s.num)}
                       className="relative flex items-center gap-3.5 p-3.5 rounded-2xl transition-all cursor-pointer"
                       style={{
-                        backgroundColor: isActive ? 'rgba(30, 58, 138, 0.35)' : 'transparent',
-                        border: isActive ? '1px solid rgba(59, 130, 246, 0.75)' : '1px solid transparent',
-                        boxShadow: isActive ? '0 0 25px rgba(59, 130, 246, 0.25)' : 'none',
+                        backgroundColor: isActive ? 'rgba(30, 58, 138, 0.4)' : 'transparent',
+                        border: isActive ? '1px solid rgba(59, 130, 246, 0.8)' : '1px solid transparent',
+                        boxShadow: isActive ? '0 0 25px rgba(59, 130, 246, 0.3)' : 'none',
                         backdropFilter: isActive ? 'blur(8px)' : 'none',
                       }}
                     >
@@ -236,14 +240,14 @@ export function OnboardingModal({
                           <p
                             className="text-[13.5px] font-bold leading-tight truncate"
                             style={{
-                              color: isActive ? '#FFFFFF' : isPassed ? '#CBD5E1' : '#64748B',
+                              color: isActive ? '#FFFFFF' : isPassed ? '#E2E8F0' : '#64748B',
                               textShadow: isActive ? '0 0 10px rgba(255, 255, 255, 0.3)' : 'none',
                             }}
                           >
                             {s.num}. {s.title}
                           </p>
                           {isActive && (
-                            <span className="text-[#3B82F6] text-sm font-mono font-bold ml-1">›</span>
+                            <span style={{ color: '#60A5FA' }} className="text-sm font-mono font-bold ml-1">›</span>
                           )}
                         </div>
                       </div>
@@ -258,8 +262,18 @@ export function OnboardingModal({
               className="hidden md:block pt-5"
               style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}
             >
-              <p className="text-[10.5px] font-mono uppercase text-[#64748B] tracking-wider mb-1 font-semibold">OTURUM</p>
-              <p className="text-[12px] font-mono text-[#CBD5E1] truncate">{userEmail || 'Avukat Hesabı'}</p>
+              <p 
+                className="text-[10.5px] font-mono uppercase tracking-wider mb-1 font-semibold"
+                style={{ color: '#64748B' }}
+              >
+                OTURUM
+              </p>
+              <p 
+                className="text-[12px] font-mono truncate"
+                style={{ color: '#CBD5E1' }}
+              >
+                {userEmail || 'Avukat Hesabı'}
+              </p>
             </div>
           </div>
 
@@ -267,7 +281,7 @@ export function OnboardingModal({
           <div 
             className="flex-1 p-6 sm:p-10 flex flex-col justify-between overflow-y-auto"
             style={{
-              backgroundColor: 'rgba(10, 16, 31, 0.65)',
+              backgroundColor: 'rgba(9, 14, 27, 0.65)',
             }}
           >
             
@@ -275,26 +289,35 @@ export function OnboardingModal({
             {step === 1 && (
               <div className="flex flex-col gap-6 animate-fadeIn">
                 <div>
-                  <p className="text-[12px] font-mono text-[#64748B] mb-1 font-semibold">
+                  <p 
+                    className="text-[12px] font-mono mb-1 font-semibold"
+                    style={{ color: '#60A5FA' }}
+                  >
                     Step 1: Büro Yapılandırması
                   </p>
                   <h1 
                     className="text-[28px] font-extrabold tracking-tight leading-snug"
                     style={{
                       color: '#FFFFFF',
-                      textShadow: '0 2px 10px rgba(0, 0, 0, 0.5)',
+                      textShadow: '0 2px 12px rgba(0, 0, 0, 0.6)',
                     }}
                   >
                     Ayris Legal&apos;e Hoş Geldiniz! ⚖️
                   </h1>
-                  <p className="text-[13.5px] text-[#94A3B8] mt-1">
+                  <p 
+                    className="text-[13.5px] mt-1"
+                    style={{ color: '#94A3B8' }}
+                  >
                     Yapay zeka asistanınızı ve şablonlarınızı büronuzun uzmanlık alanlarına göre özelleştirelim.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-[11px] font-mono text-[#94A3B8] uppercase tracking-wider block mb-1.5 font-bold">
+                    <label 
+                      className="text-[11px] font-mono uppercase tracking-wider block mb-1.5 font-bold"
+                      style={{ color: '#CBD5E1' }}
+                    >
                       AVUKAT ADI SOYADI
                     </label>
                     <input
@@ -304,8 +327,8 @@ export function OnboardingModal({
                       onChange={(e) => setFullName(e.target.value)}
                       className="w-full rounded-xl px-4 py-3 text-[14px] outline-none transition-all"
                       style={{
-                        backgroundColor: '#060B16',
-                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                        backgroundColor: '#050914',
+                        border: '1px solid rgba(59, 130, 246, 0.35)',
                         color: '#FFFFFF',
                         boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.5)',
                       }}
@@ -313,7 +336,10 @@ export function OnboardingModal({
                   </div>
 
                   <div>
-                    <label className="text-[11px] font-mono text-[#94A3B8] uppercase tracking-wider block mb-1.5 font-bold">
+                    <label 
+                      className="text-[11px] font-mono uppercase tracking-wider block mb-1.5 font-bold"
+                      style={{ color: '#CBD5E1' }}
+                    >
                       HUKUK BÜROSU UNVANI (OPSİYONEL)
                     </label>
                     <input
@@ -323,8 +349,8 @@ export function OnboardingModal({
                       onChange={(e) => setOfficeName(e.target.value)}
                       className="w-full rounded-xl px-4 py-3 text-[14px] outline-none transition-all"
                       style={{
-                        backgroundColor: '#060B16',
-                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                        backgroundColor: '#050914',
+                        border: '1px solid rgba(59, 130, 246, 0.35)',
                         color: '#FFFFFF',
                         boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.5)',
                       }}
@@ -333,9 +359,17 @@ export function OnboardingModal({
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-mono text-[#94A3B8] uppercase tracking-wider block mb-2 font-bold flex items-center justify-between">
+                  <label 
+                    className="text-[11px] font-mono uppercase tracking-wider block mb-2 font-bold flex items-center justify-between"
+                    style={{ color: '#CBD5E1' }}
+                  >
                     <span>ANA ÇALIŞMA & UZMANLIK ALANLARINIZ</span>
-                    <span className="text-[10px] text-[#3B82F6] font-mono uppercase font-bold">AI Asistanınız bu alanlara öncelik verir</span>
+                    <span 
+                      className="text-[10px] font-mono uppercase font-bold"
+                      style={{ color: '#60A5FA' }}
+                    >
+                      AI Asistanınız bu alanlara öncelik verir
+                    </span>
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                     {PRACTICE_AREAS.map((area) => {
@@ -347,14 +381,16 @@ export function OnboardingModal({
                           onClick={() => toggleArea(area.id)}
                           className="p-3 rounded-xl text-[12.5px] font-medium text-left transition-all cursor-pointer flex items-center justify-between"
                           style={{
-                            backgroundColor: isSelected ? 'rgba(37, 99, 235, 0.2)' : '#070C18',
+                            backgroundColor: isSelected ? 'rgba(37, 99, 235, 0.25)' : '#050914',
                             border: isSelected ? '1px solid #3B82F6' : '1px solid rgba(255, 255, 255, 0.08)',
-                            color: isSelected ? '#FFFFFF' : '#94A3B8',
-                            boxShadow: isSelected ? '0 0 15px rgba(59, 130, 246, 0.25)' : 'none',
+                            color: isSelected ? '#FFFFFF' : '#CBD5E1',
+                            boxShadow: isSelected ? '0 0 15px rgba(59, 130, 246, 0.3)' : 'none',
                           }}
                         >
-                          <span className="font-semibold">{area.label}</span>
-                          {isSelected && <span className="text-[#3B82F6] font-bold text-xs">✓</span>}
+                          <span className="font-semibold" style={{ color: isSelected ? '#FFFFFF' : '#CBD5E1' }}>
+                            {area.label}
+                          </span>
+                          {isSelected && <span className="font-bold text-xs" style={{ color: '#60A5FA' }}>✓</span>}
                         </button>
                       );
                     })}
@@ -363,23 +399,29 @@ export function OnboardingModal({
               </div>
             )}
 
-            {/* STEP 2: CHROME EXTENSION & UYAP INTEGRATION (GLOWING GLASSMORPHISM) */}
+            {/* STEP 2: CHROME EXTENSION & UYAP INTEGRATION */}
             {step === 2 && (
               <div className="flex flex-col gap-5 animate-fadeIn">
                 <div>
-                  <p className="text-[12px] font-mono text-[#64748B] mb-1 font-semibold">
+                  <p 
+                    className="text-[12px] font-mono mb-1 font-semibold"
+                    style={{ color: '#60A5FA' }}
+                  >
                     Step 2: Kurulum ve Entegrasyon
                   </p>
                   <h1 
                     className="text-[28px] font-extrabold tracking-tight leading-snug"
                     style={{
                       color: '#FFFFFF',
-                      textShadow: '0 2px 10px rgba(0, 0, 0, 0.5)',
+                      textShadow: '0 2px 12px rgba(0, 0, 0, 0.6)',
                     }}
                   >
                     Chrome Eklentisi & UYAP Entegrasyonu
                   </h1>
-                  <p className="text-[13.5px] text-[#94A3B8] mt-1">
+                  <p 
+                    className="text-[13.5px] mt-1"
+                    style={{ color: '#94A3B8' }}
+                  >
                     Ayris&apos;i tarayıcınıza ekleyin ve UYAP verilerinizi tek tıkla uygulamaya aktarın.
                   </p>
                 </div>
@@ -388,9 +430,9 @@ export function OnboardingModal({
                 <div 
                   className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center rounded-2xl p-5 sm:p-6 relative overflow-hidden"
                   style={{
-                    backgroundColor: '#060B16',
-                    border: '1px solid rgba(59, 130, 246, 0.3)',
-                    boxShadow: 'inset 0 0 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(59, 130, 246, 0.1)',
+                    backgroundColor: '#050914',
+                    border: '1px solid rgba(59, 130, 246, 0.35)',
+                    boxShadow: 'inset 0 0 40px rgba(0, 0, 0, 0.7), 0 0 25px rgba(59, 130, 246, 0.15)',
                   }}
                 >
                   
@@ -398,20 +440,26 @@ export function OnboardingModal({
                   <div 
                     className="absolute right-0 top-0 w-80 h-80 rounded-full pointer-events-none"
                     style={{
-                      background: 'radial-gradient(circle, rgba(59, 130, 246, 0.18) 0%, transparent 70%)',
+                      background: 'radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%)',
                       filter: 'blur(30px)',
                     }}
                   />
 
                   {/* Left part: Chrome Web Store Badge */}
-                  <div className="lg:col-span-5 flex flex-col items-start justify-center gap-3 border-b lg:border-b-0 lg:border-r border-[#1E293B] pb-4 lg:pb-0 lg:pr-5">
+                  <div 
+                    className="lg:col-span-5 flex flex-col items-start justify-center gap-3 pb-4 lg:pb-0 lg:pr-5"
+                    style={{
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRight: '1px solid rgba(255, 255, 255, 0.08)',
+                    }}
+                  >
                     <button
                       onClick={handleOpenChromeStore}
                       className="group w-full flex items-center gap-3.5 p-3.5 rounded-2xl transition-all shadow-md text-left cursor-pointer"
                       style={{
-                        backgroundColor: 'rgba(18, 26, 45, 0.8)',
-                        border: '1px solid rgba(59, 130, 246, 0.4)',
-                        boxShadow: '0 0 20px rgba(59, 130, 246, 0.15)',
+                        backgroundColor: 'rgba(18, 26, 45, 0.85)',
+                        border: '1px solid rgba(59, 130, 246, 0.45)',
+                        boxShadow: '0 0 20px rgba(59, 130, 246, 0.2)',
                       }}
                     >
                       <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center p-1.5 shrink-0 shadow-md group-hover:scale-105 transition-transform">
@@ -424,21 +472,31 @@ export function OnboardingModal({
                         </svg>
                       </div>
                       <div>
-                        <p className="text-[10px] font-mono uppercase text-[#94A3B8] tracking-wider font-semibold">AVAILABLE IN THE</p>
-                        <p className="text-[14px] font-bold text-white group-hover:text-[#60A5FA] transition-colors leading-tight">
+                        <p 
+                          className="text-[10px] font-mono uppercase tracking-wider font-semibold"
+                          style={{ color: '#94A3B8' }}
+                        >
+                          AVAILABLE IN THE
+                        </p>
+                        <p 
+                          className="text-[14px] font-bold transition-colors leading-tight"
+                          style={{ color: '#FFFFFF' }}
+                        >
                           Chrome Web Store
                         </p>
                       </div>
                     </button>
 
-                    <div className="flex items-center gap-2 text-[11px] font-mono text-[#64748B] pl-1">
+                    <div className="flex items-center gap-2 text-[11px] font-mono pl-1">
                       <span 
                         className={`w-2 h-2 rounded-full ${extensionInstalled ? 'bg-[#00E699]' : 'bg-[#F59E0B]'}`}
                         style={{
                           boxShadow: extensionInstalled ? '0 0 8px #00E699' : '0 0 8px #F59E0B',
                         }}
                       />
-                      <span className="text-[#CBD5E1]">{extensionInstalled ? 'Eklenti bağlı ve aktif ✓' : 'Kurulum 10 saniye sürer'}</span>
+                      <span style={{ color: '#CBD5E1' }}>
+                        {extensionInstalled ? 'Eklenti bağlı ve aktif ✓' : 'Kurulum 10 saniye sürer'}
+                      </span>
                     </div>
                   </div>
 
@@ -447,8 +505,8 @@ export function OnboardingModal({
                     <div 
                       className="w-full rounded-xl p-3.5 relative overflow-hidden"
                       style={{
-                        backgroundColor: '#0D1426',
-                        border: '1px solid rgba(59, 130, 246, 0.25)',
+                        backgroundColor: '#0B1120',
+                        border: '1px solid rgba(59, 130, 246, 0.3)',
                         boxShadow: '0 0 30px rgba(0, 0, 0, 0.5)',
                       }}
                     >
@@ -464,10 +522,11 @@ export function OnboardingModal({
                           <span className="w-2.5 h-2.5 rounded-full bg-[#10B981]/80"></span>
                         </div>
                         <div 
-                          className="flex items-center gap-2 px-2.5 py-0.5 rounded-md text-[10px] font-mono text-[#94A3B8]"
+                          className="flex items-center gap-2 px-2.5 py-0.5 rounded-md text-[10px] font-mono"
                           style={{
-                            backgroundColor: '#060B16',
+                            backgroundColor: '#050914',
                             border: '1px solid rgba(255, 255, 255, 0.08)',
+                            color: '#94A3B8',
                           }}
                         >
                           <span>⚖️ vatandas.uyap.gov.tr</span>
@@ -476,9 +535,9 @@ export function OnboardingModal({
                           <span 
                             className="text-[10px] px-2 py-0.5 rounded font-mono font-bold"
                             style={{
-                              backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                              backgroundColor: 'rgba(59, 130, 246, 0.25)',
                               color: '#60A5FA',
-                              border: '1px solid rgba(59, 130, 246, 0.4)',
+                              border: '1px solid rgba(59, 130, 246, 0.5)',
                             }}
                           >
                             Ayris Extension
@@ -492,18 +551,19 @@ export function OnboardingModal({
                         {/* UYAP Side */}
                         <div className="flex items-center gap-2">
                           <div 
-                            className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold text-[#FCA5A5]"
+                            className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold"
                             style={{
-                              backgroundColor: 'rgba(220, 38, 38, 0.2)',
-                              border: '1px solid rgba(220, 38, 38, 0.5)',
-                              boxShadow: '0 0 15px rgba(220, 38, 38, 0.2)',
+                              backgroundColor: 'rgba(220, 38, 38, 0.25)',
+                              border: '1px solid rgba(220, 38, 38, 0.6)',
+                              color: '#FCA5A5',
+                              boxShadow: '0 0 15px rgba(220, 38, 38, 0.25)',
                             }}
                           >
                             UYAP
                           </div>
                           <div className="hidden sm:block">
-                            <p className="text-[11px] font-bold text-white">Avukat Portalı</p>
-                            <p className="text-[9px] font-mono text-[#64748B]">Tensip & Evraklar</p>
+                            <p className="text-[11px] font-bold" style={{ color: '#FFFFFF' }}>Avukat Portalı</p>
+                            <p className="text-[9px] font-mono" style={{ color: '#94A3B8' }}>Tensip & Evraklar</p>
                           </div>
                         </div>
 
@@ -515,12 +575,17 @@ export function OnboardingModal({
                               className="h-[2px] flex-1 rounded-full"
                               style={{
                                 background: 'linear-gradient(90deg, rgba(220, 38, 38, 0.8) 0%, #3B82F6 50%, #60A5FA 100%)',
-                                boxShadow: '0 0 10px #3B82F6',
+                                boxShadow: '0 0 12px #3B82F6',
                               }}
                             />
-                            <span className="text-xs text-[#60A5FA] font-bold">➔</span>
+                            <span className="text-xs font-bold" style={{ color: '#60A5FA' }}>➔</span>
                           </div>
-                          <span className="text-[9px] font-mono text-[#3B82F6] mt-1 font-bold tracking-tight">Tek Tıkla Aktarım</span>
+                          <span 
+                            className="text-[9px] font-mono mt-1 font-bold tracking-tight"
+                            style={{ color: '#60A5FA' }}
+                          >
+                            Tek Tıkla Aktarım
+                          </span>
                         </div>
 
                         {/* Ayris Side */}
@@ -530,21 +595,24 @@ export function OnboardingModal({
                             style={{
                               background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
                               border: '1px solid #60A5FA',
-                              boxShadow: '0 0 25px rgba(59, 130, 246, 0.7)',
+                              boxShadow: '0 0 25px rgba(59, 130, 246, 0.75)',
                             }}
                           >
                             A
                           </div>
                           <div className="hidden sm:block">
-                            <p className="text-[11px] font-bold text-[#60A5FA]">Ayris Masaüstü</p>
-                            <p className="text-[9px] font-mono text-[#00E699] font-bold">AI Analiz Hazır</p>
+                            <p className="text-[11px] font-bold" style={{ color: '#60A5FA' }}>Ayris Masaüstü</p>
+                            <p className="text-[9px] font-mono font-bold" style={{ color: '#00E699' }}>AI Analiz Hazır</p>
                           </div>
                         </div>
 
                       </div>
                     </div>
 
-                    <p className="text-[11.5px] text-[#94A3B8] font-mono text-center mt-3">
+                    <p 
+                      className="text-[11.5px] font-mono text-center mt-3"
+                      style={{ color: '#94A3B8' }}
+                    >
                       UYAP dosyalarını tek tıkla Ayris&apos;e aktarın. Güvenli ve Hızlı Veri Transferi
                     </p>
                   </div>
@@ -555,32 +623,32 @@ export function OnboardingModal({
                   <div 
                     className="p-3 rounded-xl"
                     style={{
-                      backgroundColor: '#070C18',
+                      backgroundColor: '#050914',
                       border: '1px solid rgba(255, 255, 255, 0.08)',
                     }}
                   >
-                    <h4 className="text-[12px] font-bold text-white mb-0.5">⚡ Hızlı Aktarım</h4>
-                    <p className="text-[11px] text-[#94A3B8]">Evrakları tek tek indirmeden doğrudan panele çekin.</p>
+                    <h4 className="text-[12px] font-bold mb-0.5" style={{ color: '#FFFFFF' }}>⚡ Hızlı Aktarım</h4>
+                    <p className="text-[11px]" style={{ color: '#94A3B8' }}>Evrakları tek tek indirmeden doğrudan panele çekin.</p>
                   </div>
                   <div 
                     className="p-3 rounded-xl"
                     style={{
-                      backgroundColor: '#070C18',
+                      backgroundColor: '#050914',
                       border: '1px solid rgba(255, 255, 255, 0.08)',
                     }}
                   >
-                    <h4 className="text-[12px] font-bold text-white mb-0.5">🔒 Güvenli Şifreleme</h4>
-                    <p className="text-[11px] text-[#94A3B8]">Verileriniz yerel olarak bilgisayarınızda işlenir.</p>
+                    <h4 className="text-[12px] font-bold mb-0.5" style={{ color: '#FFFFFF' }}>🔒 Güvenli Şifreleme</h4>
+                    <p className="text-[11px]" style={{ color: '#94A3B8' }}>Verileriniz yerel olarak bilgisayarınızda işlenir.</p>
                   </div>
                   <div 
                     className="p-3 rounded-xl"
                     style={{
-                      backgroundColor: '#070C18',
+                      backgroundColor: '#050914',
                       border: '1px solid rgba(255, 255, 255, 0.08)',
                     }}
                   >
-                    <h4 className="text-[12px] font-bold text-white mb-0.5">📑 Otomatik Dava Kartı</h4>
-                    <p className="text-[11px] text-[#94A3B8]">Dava no, taraf ve tensip bilgileri anında ayrıştırılır.</p>
+                    <h4 className="text-[12px] font-bold mb-0.5" style={{ color: '#FFFFFF' }}>📑 Otomatik Dava Kartı</h4>
+                    <p className="text-[11px]" style={{ color: '#94A3B8' }}>Dava no, taraf ve tensip bilgileri anında ayrıştırılır.</p>
                   </div>
                 </div>
               </div>
@@ -590,17 +658,25 @@ export function OnboardingModal({
             {step === 3 && (
               <div className="flex flex-col gap-5 animate-fadeIn">
                 <div>
-                  <p className="text-[12px] font-mono text-[#64748B] mb-1 font-semibold">Step 3: Özellik Turu</p>
+                  <p 
+                    className="text-[12px] font-mono mb-1 font-semibold"
+                    style={{ color: '#A78BFA' }}
+                  >
+                    Step 3: Özellik Turu
+                  </p>
                   <h1 
                     className="text-[28px] font-extrabold tracking-tight leading-snug"
                     style={{
                       color: '#FFFFFF',
-                      textShadow: '0 2px 10px rgba(0, 0, 0, 0.5)',
+                      textShadow: '0 2px 12px rgba(0, 0, 0, 0.6)',
                     }}
                   >
                     Ayris Legal&apos;in Süper Güçleri 🚀
                   </h1>
-                  <p className="text-[13.5px] text-[#94A3B8] mt-1">
+                  <p 
+                    className="text-[13.5px] mt-1"
+                    style={{ color: '#94A3B8' }}
+                  >
                     Büronuzun dava hazırlık ve araştırma süreçlerini hızlandıracak temel modüller:
                   </p>
                 </div>
@@ -610,32 +686,35 @@ export function OnboardingModal({
                   <div 
                     className="rounded-2xl p-5 flex flex-col justify-between transition-all group cursor-default"
                     style={{
-                      backgroundColor: '#060B16',
-                      border: '1px solid rgba(59, 130, 246, 0.3)',
-                      boxShadow: '0 0 25px rgba(59, 130, 246, 0.1)',
+                      backgroundColor: '#050914',
+                      border: '1px solid rgba(59, 130, 246, 0.35)',
+                      boxShadow: '0 0 25px rgba(59, 130, 246, 0.15)',
                     }}
                   >
                     <div>
                       <div 
                         className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-3"
                         style={{
-                          backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                          backgroundColor: 'rgba(59, 130, 246, 0.25)',
                           border: '1px solid rgba(59, 130, 246, 0.5)',
                           boxShadow: '0 0 15px rgba(59, 130, 246, 0.3)',
                         }}
                       >
                         🔍
                       </div>
-                      <h3 className="text-[15px] font-bold text-white mb-1.5">
+                      <h3 className="text-[15px] font-bold mb-1.5" style={{ color: '#FFFFFF' }}>
                         18M+ İçtihat Arama
                       </h3>
-                      <p className="text-[12px] text-[#94A3B8] leading-relaxed">
+                      <p className="text-[12px] leading-relaxed" style={{ color: '#CBD5E1' }}>
                         Yargıtay, Danıştay ve BAM kararlarında semantik tarama yaparak davanıza en uygun emsalleri bulun.
                       </p>
                     </div>
                     <div 
-                      className="mt-4 pt-3 text-[10.5px] font-mono text-[#60A5FA] font-bold"
-                      style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}
+                      className="mt-4 pt-3 text-[10.5px] font-mono font-bold"
+                      style={{ 
+                        borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                        color: '#60A5FA',
+                      }}
                     >
                       Semantik & Madde Motoru
                     </div>
@@ -645,32 +724,35 @@ export function OnboardingModal({
                   <div 
                     className="rounded-2xl p-5 flex flex-col justify-between transition-all group cursor-default"
                     style={{
-                      backgroundColor: '#060B16',
-                      border: '1px solid rgba(0, 230, 153, 0.3)',
-                      boxShadow: '0 0 25px rgba(0, 230, 153, 0.1)',
+                      backgroundColor: '#050914',
+                      border: '1px solid rgba(0, 230, 153, 0.35)',
+                      boxShadow: '0 0 25px rgba(0, 230, 153, 0.15)',
                     }}
                   >
                     <div>
                       <div 
                         className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-3"
                         style={{
-                          backgroundColor: 'rgba(0, 230, 153, 0.2)',
+                          backgroundColor: 'rgba(0, 230, 153, 0.25)',
                           border: '1px solid rgba(0, 230, 153, 0.5)',
                           boxShadow: '0 0 15px rgba(0, 230, 153, 0.3)',
                         }}
                       >
                         🤖
                       </div>
-                      <h3 className="text-[15px] font-bold text-white mb-1.5">
+                      <h3 className="text-[15px] font-bold mb-1.5" style={{ color: '#FFFFFF' }}>
                         AI Dilekçe & Savunma
                       </h3>
-                      <p className="text-[12px] text-[#94A3B8] leading-relaxed">
+                      <p className="text-[12px] leading-relaxed" style={{ color: '#CBD5E1' }}>
                         Tensip zaptını veya dava dosyasını yükleyin; sistem talepleri, savunma noktalarını ve dilekçe taslağını hazırlasın.
                       </p>
                     </div>
                     <div 
-                      className="mt-4 pt-3 text-[10.5px] font-mono text-[#00E699] font-bold"
-                      style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}
+                      className="mt-4 pt-3 text-[10.5px] font-mono font-bold"
+                      style={{ 
+                        borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                        color: '#00E699',
+                      }}
                     >
                       Hukuki Mantık Asistanı
                     </div>
@@ -680,32 +762,35 @@ export function OnboardingModal({
                   <div 
                     className="rounded-2xl p-5 flex flex-col justify-between transition-all group cursor-default"
                     style={{
-                      backgroundColor: '#060B16',
-                      border: '1px solid rgba(167, 139, 250, 0.3)',
-                      boxShadow: '0 0 25px rgba(167, 139, 250, 0.1)',
+                      backgroundColor: '#050914',
+                      border: '1px solid rgba(167, 139, 250, 0.35)',
+                      boxShadow: '0 0 25px rgba(167, 139, 250, 0.15)',
                     }}
                   >
                     <div>
                       <div 
                         className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-3"
                         style={{
-                          backgroundColor: 'rgba(167, 139, 250, 0.2)',
+                          backgroundColor: 'rgba(167, 139, 250, 0.25)',
                           border: '1px solid rgba(167, 139, 250, 0.5)',
                           boxShadow: '0 0 15px rgba(167, 139, 250, 0.3)',
                         }}
                       >
                         📚
                       </div>
-                      <h3 className="text-[15px] font-bold text-white mb-1.5">
+                      <h3 className="text-[15px] font-bold mb-1.5" style={{ color: '#FFFFFF' }}>
                         Mevzuat & Şablonlar
                       </h3>
-                      <p className="text-[12px] text-[#94A3B8] leading-relaxed">
+                      <p className="text-[12px] leading-relaxed" style={{ color: '#CBD5E1' }}>
                         1000+ kanun maddesine çevrimdışı erişin, büronuzun özel şablonlarını yükleyip tek tıkla kullanın.
                       </p>
                     </div>
                     <div 
-                      className="mt-4 pt-3 text-[10.5px] font-mono text-[#A78BFA] font-bold"
-                      style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}
+                      className="mt-4 pt-3 text-[10.5px] font-mono font-bold"
+                      style={{ 
+                        borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                        color: '#A78BFA',
+                      }}
                     >
                       Kişiselleştirilmiş Kütüphane
                     </div>
@@ -714,21 +799,29 @@ export function OnboardingModal({
               </div>
             )}
 
-            {/* STEP 4: READY TO GO */}
+            {/* STEP 4: READY TO GO (WITH CRISP WHITE & METALLIC TEXT) */}
             {step === 4 && (
               <div className="flex flex-col gap-5 animate-fadeIn">
                 <div>
-                  <p className="text-[12px] font-mono text-[#64748B] mb-1 font-semibold">Step 4: Başlangıç</p>
+                  <p 
+                    className="text-[12px] font-mono mb-1 font-semibold"
+                    style={{ color: '#00E699' }}
+                  >
+                    Step 4: Başlangıç
+                  </p>
                   <h1 
                     className="text-[28px] font-extrabold tracking-tight leading-snug"
                     style={{
                       color: '#FFFFFF',
-                      textShadow: '0 2px 10px rgba(0, 0, 0, 0.5)',
+                      textShadow: '0 2px 12px rgba(0, 0, 0, 0.6)',
                     }}
                   >
                     Tebrikler, Hazırsınız! 🎉
                   </h1>
-                  <p className="text-[13.5px] text-[#94A3B8] mt-1">
+                  <p 
+                    className="text-[13.5px] mt-1"
+                    style={{ color: '#94A3B8' }}
+                  >
                     Çalışma alanınız hazırlandı. Nereden başlamak istersiniz?
                   </p>
                 </div>
@@ -736,27 +829,33 @@ export function OnboardingModal({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <button
                     onClick={() => handleComplete('cases')}
-                    className="p-4 rounded-2xl text-left transition-all group cursor-pointer flex items-center gap-4"
+                    className="p-4 rounded-2xl text-left transition-all group cursor-pointer flex items-center gap-4 hover:scale-[1.01]"
                     style={{
-                      backgroundColor: '#060B16',
-                      border: '1px solid rgba(59, 130, 246, 0.3)',
-                      boxShadow: '0 0 20px rgba(59, 130, 246, 0.1)',
+                      backgroundColor: '#050914',
+                      border: '1px solid rgba(59, 130, 246, 0.4)',
+                      boxShadow: '0 0 25px rgba(59, 130, 246, 0.15)',
                     }}
                   >
                     <div 
                       className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 group-hover:scale-105 transition-transform"
                       style={{
-                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                        border: '1px solid rgba(59, 130, 246, 0.5)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.25)',
+                        border: '1px solid rgba(59, 130, 246, 0.6)',
                       }}
                     >
                       📁
                     </div>
                     <div>
-                      <h4 className="text-[14px] font-bold text-white group-hover:text-[#60A5FA] transition-colors">
+                      <h4 
+                        className="text-[14.5px] font-bold mb-0.5"
+                        style={{ color: '#FFFFFF' }}
+                      >
                         İlk Dava Dosyamı Oluştur
                       </h4>
-                      <p className="text-[11px] text-[#94A3B8] leading-tight mt-0.5">
+                      <p 
+                        className="text-[11.5px] leading-tight"
+                        style={{ color: '#CBD5E1' }}
+                      >
                         Evrakları yükleyin ve yapay zeka analizini başlatın.
                       </p>
                     </div>
@@ -764,27 +863,33 @@ export function OnboardingModal({
 
                   <button
                     onClick={() => handleComplete('research')}
-                    className="p-4 rounded-2xl text-left transition-all group cursor-pointer flex items-center gap-4"
+                    className="p-4 rounded-2xl text-left transition-all group cursor-pointer flex items-center gap-4 hover:scale-[1.01]"
                     style={{
-                      backgroundColor: '#060B16',
-                      border: '1px solid rgba(0, 230, 153, 0.3)',
-                      boxShadow: '0 0 20px rgba(0, 230, 153, 0.1)',
+                      backgroundColor: '#050914',
+                      border: '1px solid rgba(0, 230, 153, 0.4)',
+                      boxShadow: '0 0 25px rgba(0, 230, 153, 0.15)',
                     }}
                   >
                     <div 
                       className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 group-hover:scale-105 transition-transform"
                       style={{
-                        backgroundColor: 'rgba(0, 230, 153, 0.2)',
-                        border: '1px solid rgba(0, 230, 153, 0.5)',
+                        backgroundColor: 'rgba(0, 230, 153, 0.25)',
+                        border: '1px solid rgba(0, 230, 153, 0.6)',
                       }}
                     >
                       🔍
                     </div>
                     <div>
-                      <h4 className="text-[14px] font-bold text-white group-hover:text-[#00E699] transition-colors">
+                      <h4 
+                        className="text-[14.5px] font-bold mb-0.5"
+                        style={{ color: '#FFFFFF' }}
+                      >
                         İçtihat & Emsal Araştırması Yap
                       </h4>
-                      <p className="text-[11px] text-[#94A3B8] leading-tight mt-0.5">
+                      <p 
+                        className="text-[11.5px] leading-tight"
+                        style={{ color: '#CBD5E1' }}
+                      >
                         18 milyon karar ve güncel mevzuat içinde arama yapın.
                       </p>
                     </div>
@@ -792,27 +897,33 @@ export function OnboardingModal({
 
                   <button
                     onClick={() => handleComplete('drafting')}
-                    className="p-4 rounded-2xl text-left transition-all group cursor-pointer flex items-center gap-4"
+                    className="p-4 rounded-2xl text-left transition-all group cursor-pointer flex items-center gap-4 hover:scale-[1.01]"
                     style={{
-                      backgroundColor: '#060B16',
-                      border: '1px solid rgba(167, 139, 250, 0.3)',
-                      boxShadow: '0 0 20px rgba(167, 139, 250, 0.1)',
+                      backgroundColor: '#050914',
+                      border: '1px solid rgba(167, 139, 250, 0.4)',
+                      boxShadow: '0 0 25px rgba(167, 139, 250, 0.15)',
                     }}
                   >
                     <div 
                       className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 group-hover:scale-105 transition-transform"
                       style={{
-                        backgroundColor: 'rgba(167, 139, 250, 0.2)',
-                        border: '1px solid rgba(167, 139, 250, 0.5)',
+                        backgroundColor: 'rgba(167, 139, 250, 0.25)',
+                        border: '1px solid rgba(167, 139, 250, 0.6)',
                       }}
                     >
                       ✍️
                     </div>
                     <div>
-                      <h4 className="text-[14px] font-bold text-white group-hover:text-[#A78BFA] transition-colors">
+                      <h4 
+                        className="text-[14.5px] font-bold mb-0.5"
+                        style={{ color: '#FFFFFF' }}
+                      >
                         Hızlı Dilekçe Taslağı Hazırla
                       </h4>
-                      <p className="text-[11px] text-[#94A3B8] leading-tight mt-0.5">
+                      <p 
+                        className="text-[11.5px] leading-tight"
+                        style={{ color: '#CBD5E1' }}
+                      >
                         Yapay zeka asistanı ile hukuki gerekçeli dilekçe yazın.
                       </p>
                     </div>
@@ -820,27 +931,33 @@ export function OnboardingModal({
 
                   <button
                     onClick={() => handleComplete('overview')}
-                    className="p-4 rounded-2xl text-left transition-all group cursor-pointer flex items-center gap-4"
+                    className="p-4 rounded-2xl text-left transition-all group cursor-pointer flex items-center gap-4 hover:scale-[1.01]"
                     style={{
-                      backgroundColor: '#060B16',
-                      border: '1px solid rgba(245, 158, 11, 0.3)',
-                      boxShadow: '0 0 20px rgba(245, 158, 11, 0.1)',
+                      backgroundColor: '#050914',
+                      border: '1px solid rgba(245, 158, 11, 0.4)',
+                      boxShadow: '0 0 25px rgba(245, 158, 11, 0.15)',
                     }}
                   >
                     <div 
                       className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 group-hover:scale-105 transition-transform"
                       style={{
-                        backgroundColor: 'rgba(245, 158, 11, 0.2)',
-                        border: '1px solid rgba(245, 158, 11, 0.5)',
+                        backgroundColor: 'rgba(245, 158, 11, 0.25)',
+                        border: '1px solid rgba(245, 158, 11, 0.6)',
                       }}
                     >
                       📊
                     </div>
                     <div>
-                      <h4 className="text-[14px] font-bold text-white group-hover:text-[#FBBF24] transition-colors">
+                      <h4 
+                        className="text-[14.5px] font-bold mb-0.5"
+                        style={{ color: '#FFFFFF' }}
+                      >
                         Genel Bakış Paneline Geç
                       </h4>
-                      <p className="text-[11px] text-[#94A3B8] leading-tight mt-0.5">
+                      <p 
+                        className="text-[11.5px] leading-tight"
+                        style={{ color: '#CBD5E1' }}
+                      >
                         Büronuzun takvimini ve aktif dosyalarını inceleyin.
                       </p>
                     </div>
@@ -858,10 +975,11 @@ export function OnboardingModal({
                 {step > 1 && (
                   <button
                     onClick={() => setStep((s) => Math.max(1, s - 1))}
-                    className="px-4 py-2.5 rounded-xl text-[#94A3B8] hover:text-white text-[12.5px] font-mono transition-all cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl text-[12.5px] font-mono transition-all cursor-pointer"
                     style={{
-                      backgroundColor: '#070C18',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      backgroundColor: '#050914',
+                      border: '1px solid rgba(255, 255, 255, 0.12)',
+                      color: '#E2E8F0',
                     }}
                   >
                     ← Geri
@@ -878,6 +996,7 @@ export function OnboardingModal({
                       style={{
                         background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
                         boxShadow: '0 0 30px rgba(59, 130, 246, 0.6), 0 0 10px #3B82F6',
+                        color: '#FFFFFF',
                       }}
                     >
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -887,10 +1006,11 @@ export function OnboardingModal({
                     </button>
                     <button
                       onClick={() => setStep(3)}
-                      className="px-5 py-2.5 rounded-xl text-[#CBD5E1] hover:text-white text-[12.5px] font-semibold transition-all cursor-pointer"
+                      className="px-5 py-2.5 rounded-xl text-[12.5px] font-semibold transition-all cursor-pointer"
                       style={{
                         backgroundColor: '#0D1426',
-                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        color: '#E2E8F0',
                       }}
                     >
                       Daha Sonra Hatırlat
@@ -900,7 +1020,8 @@ export function OnboardingModal({
                   <>
                     <button
                       onClick={() => handleComplete('overview')}
-                      className="px-4 py-2.5 rounded-xl text-[#94A3B8] hover:text-white text-[12px] font-mono transition-colors cursor-pointer"
+                      className="px-4 py-2.5 rounded-xl text-[12px] font-mono transition-colors cursor-pointer"
+                      style={{ color: '#94A3B8' }}
                     >
                       Atla
                     </button>
@@ -910,6 +1031,7 @@ export function OnboardingModal({
                       style={{
                         background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
                         boxShadow: '0 0 25px rgba(59, 130, 246, 0.5), 0 0 8px #3B82F6',
+                        color: '#FFFFFF',
                       }}
                     >
                       <span>Devam Et</span>
@@ -919,10 +1041,11 @@ export function OnboardingModal({
                 ) : (
                   <button
                     onClick={() => handleComplete('overview')}
-                    className="text-[#052E23] px-6 py-2.5 rounded-xl font-bold text-[13px] font-mono transition-all cursor-pointer flex items-center gap-2 hover:scale-[1.02]"
+                    className="px-6 py-2.5 rounded-xl font-bold text-[13px] font-mono transition-all cursor-pointer flex items-center gap-2 hover:scale-[1.02]"
                     style={{
                       background: 'linear-gradient(135deg, #00E699 0%, #00C885 100%)',
-                      boxShadow: '0 0 30px rgba(0, 230, 153, 0.5), 0 0 10px #00E699',
+                      boxShadow: '0 0 30px rgba(0, 230, 153, 0.6), 0 0 10px #00E699',
+                      color: '#052E23',
                     }}
                   >
                     <span>Çalışma Alanına Başla</span>
