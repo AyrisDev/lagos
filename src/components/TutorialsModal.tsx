@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 import { View } from '@/types';
 
 interface TutorialsModalProps {
@@ -11,7 +12,7 @@ interface VideoTutorial {
   id: string;
   title: string;
   description: string;
-  category: 'all' | 'basics' | 'uyap' | 'jurisprudence' | 'ai_drafting' | 'cases' | 'templates';
+  category: string;
   categoryLabel: string;
   duration: string;
   youtubeId: string; // YouTube embed video ID
@@ -20,7 +21,7 @@ interface VideoTutorial {
   highlights: string[];
 }
 
-const TUTORIAL_VIDEOS: VideoTutorial[] = [
+const DEFAULT_TUTORIAL_VIDEOS: VideoTutorial[] = [
   {
     id: 'intro-overview',
     title: 'AyrisLegal Hızlı Başlangıç & Genel Bakış',
@@ -28,7 +29,7 @@ const TUTORIAL_VIDEOS: VideoTutorial[] = [
     category: 'basics',
     categoryLabel: '🚀 Hızlı Başlangıç',
     duration: '03:45',
-    youtubeId: 'dQw4w9WgXcQ', // Standard embed placeholder
+    youtubeId: 'dQw4w9WgXcQ',
     targetView: 'overview',
     targetViewLabel: 'Genel Bakışa Git',
     highlights: ['Panel yerleşimi', 'Hızlı arama (Cmd+K)', 'Gündem & Hatırlatıcılar'],
@@ -106,13 +107,53 @@ const CATEGORIES = [
 ];
 
 export function TutorialsModal({ isOpen, onClose, onNavigate }: TutorialsModalProps) {
+  const [tutorials, setTutorials] = useState<VideoTutorial[]>(DEFAULT_TUTORIAL_VIDEOS);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeVideo, setActiveVideo] = useState<VideoTutorial | null>(null);
 
+  // Fetch live tutorials from Supabase
+  useEffect(() => {
+    if (!isOpen) return;
+
+    let isMounted = true;
+    const fetchTutorials = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('tutorials')
+          .select('*')
+          .eq('is_active', true)
+          .order('sort_order', { ascending: true });
+
+        if (!error && data && data.length > 0 && isMounted) {
+          const mapped: VideoTutorial[] = data.map((t: any) => ({
+            id: t.id,
+            title: t.title,
+            description: t.description || '',
+            category: t.category || 'basics',
+            categoryLabel: t.category_label || '🚀 Hızlı Başlangıç',
+            duration: t.duration || '03:00',
+            youtubeId: t.youtube_id,
+            targetView: t.target_view as View | undefined,
+            targetViewLabel: t.target_view_label || undefined,
+            highlights: Array.isArray(t.highlights) ? t.highlights : [],
+          }));
+          setTutorials(mapped);
+        }
+      } catch {
+        // Fallback to default tutorials on error or offline
+      }
+    };
+
+    fetchTutorials();
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
-  const filteredVideos = TUTORIAL_VIDEOS.filter((v) => {
+  const filteredVideos = tutorials.filter((v) => {
     const matchesCat = selectedCategory === 'all' || v.category === selectedCategory;
     const matchesQuery =
       searchQuery.trim() === '' ||
